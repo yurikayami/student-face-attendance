@@ -169,6 +169,7 @@ def ensure_db():
         add_column_if_not_exists(cur, "sinh_vien", "khoa", "VARCHAR(50)")
         add_column_if_not_exists(cur, "sinh_vien", "nganh_hoc", "VARCHAR(100)")
         add_column_if_not_exists(cur, "sinh_vien", "email", "VARCHAR(100)")
+        add_column_if_not_exists(cur, "sinh_vien", "avatar_path", "VARCHAR(255)")
         
         # Bảng diem_danh
         cur.execute("""
@@ -183,6 +184,7 @@ def ensure_db():
                 do_tin_cay FLOAT,
                 thuat_toan TEXT DEFAULT 'Euclidean',
                 phuong_phap_phat_hien TEXT DEFAULT 'OpenCV',
+                capture_image_path VARCHAR(255),
                 FOREIGN KEY (id_sv) REFERENCES sinh_vien (id_sv)
             )
         """)
@@ -191,6 +193,7 @@ def ensure_db():
         add_column_if_not_exists(cur, "diem_danh", "thuat_toan", "TEXT DEFAULT 'Euclidean'")
         add_column_if_not_exists(cur, "diem_danh", "phuong_phap_phat_hien", "TEXT DEFAULT 'OpenCV'")
         add_column_if_not_exists(cur, "diem_danh", "do_tin_cay", "FLOAT")
+        add_column_if_not_exists(cur, "diem_danh", "capture_image_path", "VARCHAR(255)")
         
         # Bảng nguoi_dung
         cur.execute("""
@@ -1007,7 +1010,7 @@ def api_sinh_vien():
             # Chọn tất cả cột, dùng COALESCE để xử lý NULL cho created_at nếu cần sort trong SQL
             cur.execute("""
                 SELECT id_sv, ma_sv, ho_ten, gioi_tinh, lop, khoa, nganh_hoc,
-                       so_dien_thoai, email, trang_thai, created_at
+                       so_dien_thoai, email, trang_thai, created_at, avatar_path
                 FROM sinh_vien 
                 ORDER BY id_sv DESC
             """)
@@ -1258,7 +1261,8 @@ def api_train():
 
         id_sv = data.get("id_sv")
         descriptor = data.get("descriptor")
-        
+        image_b64 = data.get("image") # Nhận dữ liệu ảnh base64
+
         print(f"📝 ID SV: {id_sv}, Descriptor length: {len(descriptor) if descriptor else 0}")
         
         if not id_sv or not descriptor:
@@ -1275,6 +1279,40 @@ def api_train():
             ma_sv = sv['ma_sv']
             ho_ten = sv['ho_ten']
             lop = sv['lop']
+
+        # Xử lý lưu ảnh Avatar (chỉ lưu nếu gửi kèm và chưa có avatar hoặc ghi đè)
+        # Ở đây ta sẽ lưu ảnh đầu tiên gửi lên làm avatar, hoặc ghi đè mỗi lần train (tùy logic)
+        # Logic: Luôn lưu ảnh mới nhất làm avatar khi train
+        if image_b64:
+            try:
+                if "," in image_b64:
+                    image_b64 = image_b64.split(",")[1]
+                
+                image_bytes = base64.b64decode(image_b64)
+                image = Image.open(io.BytesIO(image_bytes))
+                
+                # Tạo thư mục nếu chưa có
+                avatar_dir = os.path.join("static", "uploads", "avatars")
+                os.makedirs(avatar_dir, exist_ok=True)
+                
+                # Lưu file ảnh
+                avatar_filename = f"{ma_sv}.jpg"
+                avatar_path = os.path.join(avatar_dir, avatar_filename)
+                image.save(avatar_path)
+                
+                # Đường dẫn tương đối để lưu DB
+                db_avatar_path = f"/static/uploads/avatars/{avatar_filename}"
+                
+                # Cập nhật DB
+                with get_conn() as conn:
+                    cur = conn.cursor()
+                    cur.execute("UPDATE sinh_vien SET avatar_path = ? WHERE ma_sv = ?", (db_avatar_path, ma_sv))
+                    conn.commit()
+                
+                print(f"📸 Đã lưu avatar cho {ma_sv}: {db_avatar_path}")
+            except Exception as e:
+                print(f"❌ Lỗi lưu avatar: {e}")
+                # Không return lỗi, vẫn tiếp tục train
 
         # Chuyển descriptor thành numpy array
         try:
@@ -1348,6 +1386,8 @@ def api_identify():
             return jsonify({"error": "Thiếu dữ liệu"}), 400
 
         descriptor = data.get("descriptor")
+        image_b64 = data.get("image") # Nhận ảnh chụp lúc điểm danh
+
         if not descriptor:
             return jsonify({"error": "Thiếu descriptor"}), 400
 
@@ -1393,11 +1433,35 @@ def api_identify():
                         # 🛠️ KHẮC PHỤC: Lấy thời gian hiện tại để ghi vào DB
                         current_time_db_format = now_local_time_for_db()
                         
+                        # Xử lý lưu ảnh điểm danh
+                        capture_path = None
+                        if image_b64:
+                            try:
+                                if "," in image_b64:
+                                    image_b64 = image_b64.split(",")[1]
+                                
+                                image_bytes = base64.b64decode(image_b64)
+                                image = Image.open(io.BytesIO(image_bytes))
+                                
+                                # Tạo thư mục
+                                capture_dir = os.path.join("static", "uploads", "attendance_captures")
+                                os.makedirs(capture_dir, exist_ok=True)
+                                
+                                # Tạo tên file unique
+                                import uuid
+                                filename = f"{student_info['ma_sv']}_{uuid.uuid4().hex[:8]}.jpg"
+                                file_path = os.path.join(capture_dir, filename)
+                                image.save(file_path)
+                                
+                                capture_path = f"/static/uploads/attendance_captures/{filename}"
+                            except Exception as e:
+                                print(f"❌ Lỗi lưu ảnh điểm danh: {e}")
+
                         # Thêm điểm danh với thông tin thuật toán và phương pháp phát hiện
                         cur.execute("""
-                            INSERT INTO diem_danh (id_sv, ma_sv, ho_ten, lop, trang_thai, do_tin_cay, thuat_toan, phuong_phap_phat_hien, thoi_gian_vao)
-                            VALUES (?, ?, ?, ?, 'Có mặt', ?, ?, ?, ?)
-                        """, (id_sv, student_info['ma_sv'], student_info['ho_ten'], student_info['lop'], float(confidence), algorithm, detection_method, current_time_db_format))
+                            INSERT INTO diem_danh (id_sv, ma_sv, ho_ten, lop, trang_thai, do_tin_cay, thuat_toan, phuong_phap_phat_hien, thoi_gian_vao, capture_image_path)
+                            VALUES (?, ?, ?, ?, 'Có mặt', ?, ?, ?, ?, ?)
+                        """, (id_sv, student_info['ma_sv'], student_info['ho_ten'], student_info['lop'], float(confidence), algorithm, detection_method, current_time_db_format, capture_path))
                         conn.commit()
                         print(f"✅ ĐÃ ĐIỂM DANH ({algorithm} - {detection_method}): {student_info['ho_ten']} - {student_info['lop']} - Tin cậy: {confidence:.1f}%")
                     else:
@@ -1839,7 +1903,7 @@ def api_diem_danh_list():
         cur = conn.cursor()
         cur.execute("""
             SELECT dd.id_diem_danh, dd.ma_sv, dd.ho_ten, dd.lop,
-                   dd.thoi_gian_vao, dd.trang_thai, dd.do_tin_cay, dd.thuat_toan, dd.phuong_phap_phat_hien
+                   dd.thoi_gian_vao, dd.trang_thai, dd.do_tin_cay, dd.thuat_toan, dd.phuong_phap_phat_hien, dd.capture_image_path
             FROM diem_danh dd
             ORDER BY dd.thoi_gian_vao DESC
             LIMIT 50

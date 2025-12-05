@@ -350,6 +350,19 @@
             state.cooldowns[ma_sv] = now;
     
             try {
+                // Capture Image for Attendance Evidence
+                let captureImage = '';
+                try {
+                    const cvs = document.createElement('canvas');
+                    cvs.width = 300; cvs.height = 300; // Resize for storage efficiency
+                    // Crop center square
+                    const size = Math.min(video.videoWidth, video.videoHeight);
+                    const sx = (video.videoWidth - size) / 2;
+                    const sy = (video.videoHeight - size) / 2;
+                    cvs.getContext('2d').drawImage(video, sx, sy, size, size, 0, 0, 300, 300);
+                    captureImage = cvs.toDataURL('image/jpeg', 0.8);
+                } catch(e) { console.error("Capture error", e); }
+
                 const descriptorArr = Array.from(descriptor);
                 const response = await fetch('/api/identify', {
                     method: 'POST',
@@ -359,7 +372,8 @@
                         ma_sv: ma_sv,
                         ho_ten: studentInfo.ho_ten,
                         confidence: frontendConfidence,
-                        algorithm: 'ArcFace'
+                        algorithm: 'ArcFace',
+                        image: captureImage // 🛠️ Send captured image
                     })
                 });
     
@@ -405,7 +419,8 @@
                         id: correctID,
                         class: result.lop,
                         time: new Date().toLocaleTimeString('vi-VN'),
-                        confidence: result.do_tin_cay ? result.do_tin_cay.toFixed(1) : frontendConfidence.toFixed(1)
+                        confidence: result.do_tin_cay ? result.do_tin_cay.toFixed(1) : frontendConfidence.toFixed(1),
+                        img: captureImage // Use the same image we sent to server
                     });
                     
                     const todayCountEl = document.getElementById('attendanceToday');
@@ -437,15 +452,18 @@
 
     // ========== UI HELPERS ==========
     function updateAttendanceFeed(item) {
-        try {
-            const cvs = document.createElement('canvas');
-            cvs.width = 100; cvs.height = 100;
-            const size = Math.min(video.videoWidth, video.videoHeight);
-            const sx = (video.videoWidth - size) / 2;
-            const sy = (video.videoHeight - size) / 2;
-            cvs.getContext('2d').drawImage(video, sx, sy, size, size, 0, 0, 100, 100);
-            item.img = cvs.toDataURL('image/jpeg');
-        } catch(e) { item.img = ''; }
+        // Image is now passed in item.img from processAttendance
+        if (!item.img) {
+             try {
+                const cvs = document.createElement('canvas');
+                cvs.width = 100; cvs.height = 100;
+                const size = Math.min(video.videoWidth, video.videoHeight);
+                const sx = (video.videoWidth - size) / 2;
+                const sy = (video.videoHeight - size) / 2;
+                cvs.getContext('2d').drawImage(video, sx, sy, size, size, 0, 0, 100, 100);
+                item.img = cvs.toDataURL('image/jpeg');
+            } catch(e) { item.img = ''; }
+        }
 
         state.sessionAttendance.unshift(item);
         saveSessionData();

@@ -63,6 +63,7 @@
                         <th class="px-6 py-4">Mã SV</th>
                         <th class="px-6 py-4">Họ tên</th>
                         <th class="px-6 py-4">Lớp</th>
+                        <th class="px-6 py-4 text-center">Ảnh</th>
                         <th class="px-6 py-4">Thời gian vào</th>
                         <th class="px-6 py-4">Độ tin cậy</th>
                         <th class="px-6 py-4">Trạng thái</th>
@@ -154,7 +155,7 @@
         if(countEl) countEl.textContent = data.length;
         
         if (data.length === 0) {
-            tbody.innerHTML = '<tr><td colspan="8" class="text-center py-8 text-slate-400 flex-col"><i class="far fa-folder-open text-4xl mb-2 opacity-20"></i><br>Không có dữ liệu phù hợp</td></tr>';
+            tbody.innerHTML = '<tr><td colspan="9" class="text-center py-8 text-slate-400 flex-col"><i class="far fa-folder-open text-4xl mb-2 opacity-20"></i><br>Không có dữ liệu phù hợp</td></tr>';
             return;
         }
         data.forEach((item, idx) => {
@@ -167,11 +168,17 @@
             else if (conf >= 60) badge = '<span class="px-2.5 py-0.5 rounded-full bg-yellow-100 text-yellow-700 text-xs font-bold border border-yellow-200">TB</span>';
             else badge = '<span class="px-2.5 py-0.5 rounded-full bg-red-100 text-red-700 text-xs font-bold border border-red-200">Thấp</span>';
             
+            // Capture Image
+            var captureHtml = item.capture_image_path 
+                ? `<img src="${item.capture_image_path}" class="w-12 h-12 rounded-lg object-cover border border-slate-200 shadow-sm cursor-pointer hover:scale-150 transition-transform origin-left" onclick="window.open(this.src, '_blank')">`
+                : `<div class="w-12 h-12 rounded-lg bg-slate-100 flex items-center justify-center text-slate-400 text-xs"><i class="fas fa-camera-slash"></i></div>`;
+
             tr.innerHTML = `
                 <td class="px-6 py-4 text-center text-slate-400 text-xs">${idx + 1}</td>
                 <td class="px-6 py-4 font-mono text-slate-600 text-xs font-bold">${item.ma_sv}</td>
                 <td class="px-6 py-4 font-medium text-slate-800">${item.ho_ten}</td>
                 <td class="px-6 py-4"><span class="px-2 py-1 bg-slate-100 rounded text-xs text-slate-600 font-medium">${item.lop || '?'}</span></td>
+                <td class="px-6 py-4 text-center">${captureHtml}</td>
                 <td class="px-6 py-4 text-indigo-600 font-medium text-sm">${item.thoi_gian_vao}</td>
                 <td class="px-6 py-4 font-mono text-xs">${conf.toFixed(1)}%</td>
                 <td class="px-6 py-4">${badge}</td>
