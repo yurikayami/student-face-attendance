@@ -104,7 +104,13 @@ def initialize_modern_models():
         arcface_model.eval()
         
         print("🔄 Đang khởi tạo LBPH Recognizer...")
-        lbph_recognizer = cv2.face.LBPHFaceRecognizer_create()
+        try:
+            lbph_recognizer = cv2.face.LBPHFaceRecognizer_create()
+            print("✅ LBPH Recognizer đã được khởi tạo")
+        except AttributeError:
+            print("⚠️ OpenCV không có cv2.face module, cần cài opencv-contrib-python")
+            print("   Cài đặt: pip install opencv-contrib-python")
+            lbph_recognizer = None
         
         print("🔄 Đang khởi tạo MTCNN Detector...")
         try:
@@ -125,8 +131,10 @@ initialize_modern_models()
 # ---------- DATABASE SQLITE ----------
 @contextmanager
 def get_conn():
-    conn = sqlite3.connect(DB_PATH)
+    conn = sqlite3.connect(DB_PATH, timeout=10.0)  # 10 giây timeout
     conn.row_factory = sqlite3.Row
+    conn.execute('PRAGMA journal_mode=WAL')  # Write-Ahead Logging để tránh lock
+    conn.execute('PRAGMA busy_timeout=5000')  # 5 giây busy timeout
     try:
         yield conn
     finally:
@@ -1893,6 +1901,12 @@ def api_encodings():
     
     except Exception as e:
         print(f"❌ Lỗi API encodings: {e}")
+        return jsonify({
+            'error': str(e),
+            'total_encodings': 0,
+            'total_students': 0,
+            'encodings': {}
+        }), 500
         return jsonify({'error': str(e)}), 500
 
 @app.route("/api/diem-danh", methods=["GET", "POST"])

@@ -273,7 +273,7 @@
                 let bestMatch = null;
                 let matchedID = null;
 
-                // 1. FRONTEND MATCHING
+                // 1. FRONTEND MATCHING (fallback nếu backend lỗi)
                 if (state.faceMatcher) {
                     bestMatch = state.faceMatcher.findBestMatch(det.descriptor);
                 }
@@ -344,6 +344,7 @@
     }
 
         // ========== HANDLE ATTENDANCE & DYNAMIC LEARNING ========== 
+        // ⚡ Sử dụng thuật toán ArcFace từ Backend (bảo mật & chính xác cao)
         async function processAttendance(ma_sv, studentInfo, descriptor, frontendConfidence, originalGuessID) {
             const now = Date.now();
             if (state.cooldowns[ma_sv] && now - state.cooldowns[ma_sv] < 5000) return;
@@ -372,7 +373,7 @@
                         ma_sv: ma_sv,
                         ho_ten: studentInfo.ho_ten,
                         confidence: frontendConfidence,
-                        algorithm: 'ArcFace',
+                        algorithm: 'ArcFace', // Backend sẽ sử dụng ArcFace để nhận diện
                         image: captureImage // 🛠️ Send captured image
                     })
                 });
