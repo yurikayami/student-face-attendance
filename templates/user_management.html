@@ -1,0 +1,833 @@
+{% extends "header.html" %}
+
+{% block title %}Hệ thống điểm danh khuôn mặt sinh viên DLA{% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+    <div class="row">
+       
+        <!-- Main Content -->
+        <div class="col-md-9 col-lg-12 ms-auto main-content">
+            <!-- Header -->
+            <div class="header bg-white shadow-sm p-3 mb-4 rounded">
+                <div class="d-flex justify-content-between align-items-center">
+                    <h2 class="mb-0 text-primary">
+                        <i class="fas fa-users me-2"></i>
+                        Quản lý người dùng
+                    </h2>
+                    <div class="d-flex align-items-center">
+                        <div class="user-avatar bg-primary text-white" id="currentUserAvatar">AD</div>
+                        <div class="ms-2">
+                            <div class="fw-bold" id="currentUserName">Admin User</div>
+                            <small class="text-muted" id="currentUserRole">Quản trị viên</small>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Thông báo hệ thống -->
+            <div id="systemAlert" class="alert alert-info alert-dismissible fade show d-none" role="alert">
+                <i class="fas fa-info-circle me-2"></i>
+                <span id="alertMessage"></span>
+                <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+            </div>
+
+            <!-- User Info Card -->
+            <div class="card mb-4 shadow-sm">
+                <div class="card-header bg-white d-flex justify-content-between align-items-center">
+                    <span class="fw-bold text-dark">
+                        <i class="fas fa-user me-2 text-primary"></i>Thông tin người dùng hiện tại
+                    </span>
+                    <button class="btn btn-sm btn-outline-primary" onclick="loadUserInfo()">
+                        <i class="fas fa-sync-alt me-1"></i> Làm mới
+                    </button>
+                </div>
+                <div class="card-body">
+                    <div id="userInfo" class="d-flex align-items-center justify-content-center py-3">
+                        <div class="spinner-border text-primary" role="status">
+                            <span class="visually-hidden">Loading...</span>
+                        </div>
+                        <div class="ms-3">Đang tải thông tin người dùng...</div>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Users Management Card -->
+            <div class="card shadow-sm">
+                <div class="card-header bg-white d-flex justify-content-between align-items-center">
+                    <span class="fw-bold text-dark">
+                        <i class="fas fa-users me-2 text-primary"></i>Quản lý người dùng hệ thống
+                    </span>
+                    <div class="d-flex">
+                        <div class="search-box me-2">
+                            <i class="fas fa-search text-muted"></i>
+                            <input type="text" class="form-control" placeholder="Tìm kiếm người dùng..." id="searchInput">
+                        </div>
+                        <button class="btn btn-primary me-2" onclick="loadUsers()">
+                            <i class="fas fa-sync-alt me-1"></i> Tải danh sách
+                        </button>
+                        <button class="btn btn-success" onclick="showAddUserModal()">
+                            <i class="fas fa-user-plus me-1"></i> Thêm người dùng
+                        </button>
+                    </div>
+                </div>
+                <div class="card-body">
+                    <div class="table-responsive">
+                        <table class="table table-hover">
+                            <thead class="table-light">
+                                <tr>
+                                    <th width="5%">#</th>
+                                    <th width="15%">Tên đăng nhập</th>
+                                    <th width="20%">Họ và tên</th>
+                                    <th width="15%">Email</th>
+                                    <th width="15%">Vai trò</th>
+                                    <th width="10%">Trạng thái</th>
+                                    <th width="20%">Thao tác</th>
+                                </tr>
+                            </thead>
+                            <tbody id="usersList">
+                                <tr>
+                                    <td colspan="7" class="text-center py-5">
+                                        <div class="text-muted">
+                                            <i class="fas fa-users fa-2x mb-3"></i>
+                                            <p>Chưa có dữ liệu người dùng. Vui lòng nhấn "Tải danh sách" để xem thông tin.</p>
+                                        </div>
+                                    </td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+
+           
+        </div>
+    </div>
+</div>
+
+<!-- Add User Modal -->
+<div class="modal fade" id="addUserModal" tabindex="-1" aria-labelledby="addUserModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <div class="modal-header bg-primary text-white">
+                <h5 class="modal-title" id="addUserModalLabel">
+                    <i class="fas fa-user-plus me-2"></i>Thêm người dùng mới
+                </h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <form id="addUserForm">
+                    <div class="row">
+                        <div class="col-md-6 mb-3">
+                            <label for="username" class="form-label">Tên đăng nhập *</label>
+                            <input type="text" class="form-control" id="username" name="username" required>
+                        </div>
+                        <div class="col-md-6 mb-3">
+                            <label for="email" class="form-label">Email</label>
+                            <input type="email" class="form-control" id="email" name="email">
+                        </div>
+                    </div>
+                    <div class="row">
+                        <div class="col-md-6 mb-3">
+                            <label for="ho_ten" class="form-label">Họ và tên *</label>
+                            <input type="text" class="form-control" id="ho_ten" name="ho_ten" required>
+                        </div>
+                        <div class="col-md-6 mb-3">
+                            <label for="so_dien_thoai" class="form-label">Số điện thoại</label>
+                            <input type="text" class="form-control" id="so_dien_thoai" name="so_dien_thoai">
+                        </div>
+                    </div>
+                    <div class="row">
+                        <div class="col-md-6 mb-3">
+                            <label for="vai_tro" class="form-label">Vai trò *</label>
+                            <select class="form-select" id="vai_tro" name="vai_tro" required>
+                                <option value="">Chọn vai trò</option>
+                                <option value="GiangVien">Giảng viên</option>
+                                <option value="TroGiang">Trợ giảng</option>
+                                <option value="Admin">Quản trị viên</option>
+                            </select>
+                        </div>
+                        <div class="col-md-6 mb-3">
+                            <label for="trang_thai" class="form-label">Trạng thái *</label>
+                            <select class="form-select" id="trang_thai" name="trang_thai" required>
+                                <option value="Hoạt động">Hoạt động</option>
+                                <option value="Khóa">Khóa</option>
+                            </select>
+                        </div>
+                    </div>
+                    <div class="row">
+                        <div class="col-md-6 mb-3">
+                            <label for="password" class="form-label">Mật khẩu *</label>
+                            <input type="password" class="form-control" id="password" name="password" required>
+                        </div>
+                        <div class="col-md-6 mb-3">
+                            <label for="confirm_password" class="form-label">Xác nhận mật khẩu *</label>
+                            <input type="password" class="form-control" id="confirm_password" name="confirm_password" required>
+                        </div>
+                    </div>
+                </form>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Hủy</button>
+                <button type="button" class="btn btn-primary" onclick="addUser()">Thêm người dùng</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Edit User Modal -->
+<div class="modal fade" id="editUserModal" tabindex="-1" aria-labelledby="editUserModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <div class="modal-header bg-warning text-white">
+                <h5 class="modal-title" id="editUserModalLabel">
+                    <i class="fas fa-edit me-2"></i>Chỉnh sửa người dùng
+                </h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <form id="editUserForm">
+                    <input type="hidden" id="edit_id_user" name="id_user">
+                    <div class="row">
+                        <div class="col-md-6 mb-3">
+                            <label for="edit_ho_ten" class="form-label">Họ và tên *</label>
+                            <input type="text" class="form-control" id="edit_ho_ten" name="ho_ten" required>
+                        </div>
+                        <div class="col-md-6 mb-3">
+                            <label for="edit_email" class="form-label">Email</label>
+                            <input type="email" class="form-control" id="edit_email" name="email">
+                        </div>
+                    </div>
+                    <div class="row">
+                        <div class="col-md-6 mb-3">
+                            <label for="edit_so_dien_thoai" class="form-label">Số điện thoại</label>
+                            <input type="text" class="form-control" id="edit_so_dien_thoai" name="so_dien_thoai">
+                        </div>
+                        <div class="col-md-6 mb-3">
+                            <label for="edit_vai_tro" class="form-label">Vai trò *</label>
+                            <select class="form-select" id="edit_vai_tro" name="vai_tro" required>
+                                <option value="GiangVien">Giảng viên</option>
+                                <option value="TroGiang">Trợ giảng</option>
+                                <option value="Admin">Quản trị viên</option>
+                            </select>
+                        </div>
+                    </div>
+                    <div class="row">
+                        <div class="col-md-6 mb-3">
+                            <label for="edit_trang_thai" class="form-label">Trạng thái *</label>
+                            <select class="form-select" id="edit_trang_thai" name="trang_thai" required>
+                                <option value="Hoạt động">Hoạt động</option>
+                                <option value="Khóa">Khóa</option>
+                            </select>
+                        </div>
+                        <div class="col-md-6 mb-3">
+                            <label for="edit_password" class="form-label">Mật khẩu mới (để trống nếu không đổi)</label>
+                            <input type="password" class="form-control" id="edit_password" name="password">
+                        </div>
+                    </div>
+                </form>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Hủy</button>
+                <button type="button" class="btn btn-warning" onclick="updateUser()">Cập nhật</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- User Detail Modal -->
+<div class="modal fade" id="userDetailModal" tabindex="-1" aria-labelledby="userDetailModalLabel" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header bg-info text-white">
+                <h5 class="modal-title" id="userDetailModalLabel">
+                    <i class="fas fa-user-circle me-2"></i>Chi tiết người dùng
+                </h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body" id="userDetailContent">
+                <!-- User details will be loaded here -->
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Đóng</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<style>
+    .sidebar {
+        min-height: 100vh;
+        z-index: 1000;
+    }
+    
+    .main-content {
+        margin-left: 16.666667%;
+    }
+    
+    .card {
+        border: none;
+        border-radius: 10px;
+    }
+    
+    .card-header {
+        border-bottom: 1px solid rgba(0,0,0,0.05);
+        font-weight: 600;
+        padding: 15px 20px;
+        border-radius: 10px 10px 0 0 !important;
+    }
+    
+    .user-avatar {
+        width: 40px;
+        height: 40px;
+        border-radius: 50%;
+        background-color: #3498db;
+        color: white;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-weight: bold;
+        margin-right: 10px;
+    }
+    
+    .table th {
+        border-top: none;
+        font-weight: 600;
+        color: #2c3e50;
+    }
+    
+    .badge-role {
+        padding: 5px 10px;
+        border-radius: 20px;
+        font-size: 0.8rem;
+    }
+    
+    .badge-admin {
+        background-color: #e74c3c;
+        color: white;
+    }
+    
+    .badge-giangvien {
+        background-color: #3498db;
+        color: white;
+    }
+    
+    .badge-trogiang {
+        background-color: #f39c12;
+        color: white;
+    }
+    
+    .action-btn {
+        padding: 5px 10px;
+        border-radius: 5px;
+        margin: 0 2px;
+        border: none;
+        transition: all 0.3s;
+    }
+    
+    .btn-edit {
+        background-color: rgba(52, 152, 219, 0.1);
+        color: #3498db;
+    }
+    
+    .btn-delete {
+        background-color: rgba(231, 76, 60, 0.1);
+        color: #e74c3c;
+    }
+    
+    .btn-view {
+        background-color: rgba(46, 204, 113, 0.1);
+        color: #2ecc71;
+    }
+    
+    .action-btn:hover {
+        transform: scale(1.05);
+    }
+    
+    .search-box {
+        position: relative;
+    }
+    
+    .search-box input {
+        padding-left: 40px;
+        border-radius: 20px;
+        border: 1px solid #dee2e6;
+    }
+    
+    .search-box i {
+        position: absolute;
+        left: 15px;
+        top: 12px;
+        color: #6c757d;
+    }
+    
+    .user-info-avatar {
+        width: 70px;
+        height: 70px;
+        border-radius: 50%;
+        background-color: #3498db;
+        color: white;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 1.8rem;
+        font-weight: bold;
+        margin-right: 20px;
+    }
+    
+    .nav-link {
+        transition: all 0.3s;
+        border-radius: 5px;
+    }
+    
+    .nav-link:hover {
+        background-color: rgba(255,255,255,0.1);
+        transform: translateX(5px);
+    }
+    
+    .nav-link.active {
+        /* background-color: #007bff; */
+        color: white !important;
+    }
+    
+    @media (max-width: 768px) {
+        .sidebar {
+            position: relative;
+            height: auto;
+        }
+        
+        .main-content {
+            margin-left: 0;
+        }
+    }
+</style>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+    // Biến toàn cục để lưu trữ danh sách người dùng
+    let currentUsers = [];
+    
+    // Kiểm tra phần tử DOM tồn tại trước khi thao tác
+    function getElementSafely(id) {
+        const element = document.getElementById(id);
+        if (!element) {
+            console.warn(`Element with id '${id}' not found`);
+            return null;
+        }
+        return element;
+    }
+    
+    // Khởi tạo trang quản lý người dùng
+    function initializeDashboard() {
+        console.log("Khởi tạo trang quản lý người dùng");
+        
+        // Đợi DOM load hoàn toàn
+        if (document.readyState === 'loading') {
+            document.addEventListener('DOMContentLoaded', function() {
+                loadUserInfo();
+                setupEventListeners();
+                loadUsers(); // Tự động tải danh sách người dùng
+            });
+        } else {
+            loadUserInfo();
+            setupEventListeners();
+            loadUsers(); // Tự động tải danh sách người dùng
+        }
+    }
+    
+    // Thiết lập event listeners
+    function setupEventListeners() {
+        const searchInput = getElementSafely('searchInput');
+        if (searchInput) {
+            searchInput.addEventListener('input', handleSearch);
+        }
+    }
+    
+    // Xử lý tìm kiếm
+    function handleSearch(e) {
+        const searchTerm = e.target.value.toLowerCase();
+        const usersList = getElementSafely('usersList');
+        
+        if (!usersList || currentUsers.length === 0) return;
+        
+        const filteredUsers = currentUsers.filter(user => 
+            user.username.toLowerCase().includes(searchTerm) ||
+            (user.ho_ten && user.ho_ten.toLowerCase().includes(searchTerm)) ||
+            (user.email && user.email.toLowerCase().includes(searchTerm)) ||
+            user.vai_tro.toLowerCase().includes(searchTerm)
+        );
+        
+        renderUsersTable(filteredUsers);
+    }
+    
+    // Hiển thị thông báo hệ thống
+    function showAlert(message, type = 'info') {
+        const alert = getElementSafely('systemAlert');
+        const alertMessage = getElementSafely('alertMessage');
+        
+        if (!alert || !alertMessage) return;
+        
+        alert.className = `alert alert-${type} alert-dismissible fade show`;
+        alertMessage.textContent = message;
+        alert.classList.remove('d-none');
+        
+        // Tự động ẩn thông báo sau 5 giây
+        setTimeout(() => {
+            alert.classList.add('d-none');
+        }, 5000);
+    }
+    
+    // API call helper
+    async function apiCall(url, options = {}) {
+        try {
+            const response = await fetch(url, {
+                headers: {
+                    'Content-Type': 'application/json',
+                    ...options.headers
+                },
+                ...options
+            });
+            
+            if (!response.ok) {
+                throw new Error(`HTTP error! status: ${response.status}`);
+            }
+            
+            return await response.json();
+        } catch (error) {
+            console.error('API call failed:', error);
+            showAlert('Lỗi kết nối đến server', 'danger');
+            throw error;
+        }
+    }
+    
+    // Load current user info từ API thật
+    async function loadUserInfo() {
+        const userInfo = getElementSafely('userInfo');
+        if (!userInfo) return;
+        
+        userInfo.innerHTML = `
+            <div class="spinner-border text-primary" role="status">
+                <span class="visually-hidden">Loading...</span>
+            </div>
+            <div class="ms-3">Đang tải thông tin người dùng...</div>
+        `;
+        
+        try {
+            const userData = await apiCall('/api/user-info');
+            
+            const initials = userData.ho_ten ? 
+                userData.ho_ten.split(' ').map(n => n[0]).join('').toUpperCase() : 'U';
+            
+            // Cập nhật header
+            const avatarElement = getElementSafely('currentUserAvatar');
+            const nameElement = getElementSafely('currentUserName');
+            const roleElement = getElementSafely('currentUserRole');
+            
+            if (avatarElement) avatarElement.textContent = initials;
+            if (nameElement) nameElement.textContent = userData.ho_ten;
+            if (roleElement) {
+                const roleText = userData.vai_tro === 'Admin' ? 'Quản trị viên' : 
+                               userData.vai_tro === 'GiangVien' ? 'Giảng viên' : 'Trợ giảng';
+                roleElement.textContent = roleText;
+            }
+            
+            userInfo.innerHTML = `
+                <div class="user-info-avatar">${initials}</div>
+                <div class="user-details">
+                    <h5 class="mb-1">${userData.ho_ten || 'Chưa cập nhật'}</h5>
+                    <p class="text-muted mb-1">
+                        <i class="fas fa-user-tag me-1"></i> 
+                        ${userData.vai_tro === 'Admin' ? 'Quản trị viên' : 
+                          userData.vai_tro === 'GiangVien' ? 'Giảng viên' : 'Trợ giảng'}
+                    </p>
+                    <p class="text-muted mb-1">
+                        <i class="fas fa-envelope me-1"></i> 
+                        ${userData.email || 'Chưa cập nhật'}
+                    </p>
+                    <small class="text-muted">
+                        <i class="fas fa-clock me-1"></i> 
+                        Cập nhật: ${new Date().toLocaleTimeString('vi-VN')}
+                    </small>
+                </div>
+            `;
+        } catch (error) {
+            userInfo.innerHTML = `
+                <div class="text-center text-danger">
+                    <i class="fas fa-exclamation-triangle fa-2x mb-2"></i>
+                    <p>Không thể tải thông tin người dùng</p>
+                </div>
+            `;
+        }
+    }
+    
+    // Load users list từ API thật
+    async function loadUsers() {
+        const usersList = getElementSafely('usersList');
+        if (!usersList) return;
+        
+        usersList.innerHTML = `
+            <tr>
+                <td colspan="7" class="text-center py-4">
+                    <div class="spinner-border text-primary" role="status">
+                        <span class="visually-hidden">Loading...</span>
+                    </div>
+                    <p class="mt-2">Đang tải dữ liệu người dùng...</p>
+                </td>
+            </tr>
+        `;
+        
+        try {
+            const users = await apiCall('/api/nguoi-dung');
+            currentUsers = users;
+            renderUsersTable(users);
+            showAlert(`Đã tải thành công ${users.length} người dùng`, 'success');
+        } catch (error) {
+            usersList.innerHTML = `
+                <tr>
+                    <td colspan="7" class="text-center py-5 text-danger">
+                        <i class="fas fa-exclamation-triangle fa-2x mb-3"></i>
+                        <p>Không thể tải danh sách người dùng</p>
+                        <button class="btn btn-primary mt-2" onclick="loadUsers()">Thử lại</button>
+                    </td>
+                </tr>
+            `;
+        }
+    }
+    
+    // Render bảng người dùng với dữ liệu thật
+    function renderUsersTable(users) {
+        const usersList = getElementSafely('usersList');
+        if (!usersList) return;
+        
+        if (users.length === 0) {
+            usersList.innerHTML = `
+                <tr>
+                    <td colspan="7" class="text-center py-5">
+                        <div class="text-muted">
+                            <i class="fas fa-users fa-2x mb-3"></i>
+                            <p>Không có người dùng nào trong hệ thống.</p>
+                        </div>
+                    </td>
+                </tr>
+            `;
+            return;
+        }
+        
+        let html = '';
+        users.forEach((user, index) => {
+            const initials = user.ho_ten ? 
+                user.ho_ten.split(' ').map(n => n[0]).join('').toUpperCase() : 'U';
+            
+            let roleBadge = '';
+            if (user.vai_tro === 'Admin') {
+                roleBadge = '<span class="badge badge-role badge-admin">Quản trị viên</span>';
+            } else if (user.vai_tro === 'GiangVien') {
+                roleBadge = '<span class="badge badge-role badge-giangvien">Giảng viên</span>';
+            } else {
+                roleBadge = '<span class="badge badge-role badge-trogiang">Trợ giảng</span>';
+            }
+            
+            const statusBadge = user.trang_thai === 'Hoạt động' 
+                ? '<span class="badge bg-success">Hoạt động</span>'
+                : '<span class="badge bg-secondary">Khóa</span>';
+            
+            html += `
+                <tr>
+                    <td>${index + 1}</td>
+                    <td>
+                        <div class="d-flex align-items-center">
+                            <div class="user-avatar me-2">${initials}</div>
+                            ${user.username}
+                        </div>
+                    </td>
+                    <td>${user.ho_ten || 'Chưa cập nhật'}</td>
+                    <td>${user.email || 'Chưa cập nhật'}</td>
+                    <td>${roleBadge}</td>
+                    <td>${statusBadge}</td>
+                    <td>
+                        <button class="action-btn btn-view" title="Xem chi tiết" onclick="viewUserDetail(${user.id_user})">
+                            <i class="fas fa-eye"></i>
+                        </button>
+                        <button class="action-btn btn-edit" title="Chỉnh sửa" onclick="editUser(${user.id_user})">
+                            <i class="fas fa-edit"></i>
+                        </button>
+                        <button class="action-btn btn-delete" title="Xóa" onclick="deleteUser(${user.id_user})">
+                            <i class="fas fa-trash"></i>
+                        </button>
+                    </td>
+                </tr>
+            `;
+        });
+        
+        usersList.innerHTML = html;
+    }
+    
+    // Hiển thị modal thêm người dùng
+    function showAddUserModal() {
+        const modalElement = getElementSafely('addUserModal');
+        if (!modalElement) return;
+        
+        const modal = new bootstrap.Modal(modalElement);
+        const form = getElementSafely('addUserForm');
+        if (form) form.reset();
+        modal.show();
+    }
+    
+    // Thêm người dùng mới với API thật
+    async function addUser() {
+        const form = getElementSafely('addUserForm');
+        if (!form) return;
+        
+        const formData = new FormData(form);
+        const data = Object.fromEntries(formData);
+        
+        // Kiểm tra mật khẩu
+        if (data.password !== data.confirm_password) {
+            showAlert('Mật khẩu xác nhận không khớp', 'danger');
+            return;
+        }
+        
+        // Chuẩn bị dữ liệu gửi lên server
+        const userData = {
+            username: data.username,
+            password: data.password,
+            ho_ten: data.ho_ten,
+            email: data.email || null,
+            so_dien_thoai: data.so_dien_thoai || null,
+            vai_tro: data.vai_tro,
+            trang_thai: data.trang_thai
+        };
+        
+        try {
+            const result = await apiCall('/api/nguoi-dung', {
+                method: 'POST',
+                body: JSON.stringify(userData)
+            });
+            
+            showAlert('Thêm người dùng thành công', 'success');
+            const modal = bootstrap.Modal.getInstance(getElementSafely('addUserModal'));
+            if (modal) modal.hide();
+            loadUsers(); // Reload danh sách
+        } catch (error) {
+            showAlert('Lỗi khi thêm người dùng', 'danger');
+        }
+    }
+    
+    // Xem chi tiết người dùng
+    function viewUserDetail(userId) {
+        const user = currentUsers.find(u => u.id_user === userId);
+        if (user) {
+            const userDetailContent = getElementSafely('userDetailContent');
+            if (userDetailContent) {
+                const roleText = user.vai_tro === 'Admin' ? 'Quản trị viên' : 
+                               user.vai_tro === 'GiangVien' ? 'Giảng viên' : 'Trợ giảng';
+                
+                userDetailContent.innerHTML = `
+                    <div class="row">
+                        <div class="col-md-4 text-center">
+                            <div class="user-info-avatar mx-auto mb-3">
+                                ${user.ho_ten ? user.ho_ten.split(' ').map(n => n[0]).join('').toUpperCase() : 'U'}
+                            </div>
+                        </div>
+                        <div class="col-md-8">
+                            <h5>${user.ho_ten || 'Chưa cập nhật'}</h5>
+                            <p><strong>Tên đăng nhập:</strong> ${user.username}</p>
+                            <p><strong>Email:</strong> ${user.email || 'Chưa cập nhật'}</p>
+                            <p><strong>Số điện thoại:</strong> ${user.so_dien_thoai || 'Chưa cập nhật'}</p>
+                            <p><strong>Vai trò:</strong> ${roleText}</p>
+                            <p><strong>Trạng thái:</strong> ${user.trang_thai}</p>
+                            <p><strong>Ngày tạo:</strong> ${new Date(user.created_at).toLocaleDateString('vi-VN')}</p>
+                        </div>
+                    </div>
+                `;
+                
+                const modalElement = getElementSafely('userDetailModal');
+                if (modalElement) {
+                    const modal = new bootstrap.Modal(modalElement);
+                    modal.show();
+                }
+            }
+        }
+    }
+    
+    // Chỉnh sửa người dùng
+    function editUser(userId) {
+        const user = currentUsers.find(u => u.id_user === userId);
+        if (user) {
+            // Điền dữ liệu vào form
+            getElementSafely('edit_id_user').value = user.id_user;
+            getElementSafely('edit_ho_ten').value = user.ho_ten || '';
+            getElementSafely('edit_email').value = user.email || '';
+            getElementSafely('edit_so_dien_thoai').value = user.so_dien_thoai || '';
+            getElementSafely('edit_vai_tro').value = user.vai_tro;
+            getElementSafely('edit_trang_thai').value = user.trang_thai;
+            
+            const modalElement = getElementSafely('editUserModal');
+            if (modalElement) {
+                const modal = new bootstrap.Modal(modalElement);
+                modal.show();
+            }
+        }
+    }
+    
+    // Cập nhật người dùng
+    async function updateUser() {
+        const form = getElementSafely('editUserForm');
+        if (!form) return;
+        
+        const formData = new FormData(form);
+        const data = Object.fromEntries(formData);
+        
+        const userData = {
+            ho_ten: data.ho_ten,
+            email: data.email || null,
+            so_dien_thoai: data.so_dien_thoai || null,
+            vai_tro: data.vai_tro,
+            trang_thai: data.trang_thai
+        };
+        
+        // Nếu có mật khẩu mới
+        if (data.password) {
+            userData.password = data.password;
+        }
+        
+        try {
+            const result = await apiCall(`/api/nguoi-dung/${data.id_user}`, {
+                method: 'PUT',
+                body: JSON.stringify(userData)
+            });
+            
+            showAlert('Cập nhật người dùng thành công', 'success');
+            const modal = bootstrap.Modal.getInstance(getElementSafely('editUserModal'));
+            if (modal) modal.hide();
+            loadUsers(); // Reload danh sách
+        } catch (error) {
+            showAlert('Lỗi khi cập nhật người dùng', 'danger');
+        }
+    }
+    
+    // Xóa người dùng
+    async function deleteUser(userId) {
+        if (!confirm('Bạn có chắc chắn muốn xóa người dùng này?')) {
+            return;
+        }
+        
+        try {
+            const result = await apiCall(`/api/nguoi-dung/${userId}`, {
+                method: 'DELETE'
+            });
+            
+            showAlert('Xóa người dùng thành công', 'success');
+            loadUsers(); // Reload danh sách
+        } catch (error) {
+            showAlert('Lỗi khi xóa người dùng', 'danger');
+        }
+    }
+    
+    // Khởi tạo dashboard khi trang được load
+    document.addEventListener('DOMContentLoaded', function() {
+        initializeDashboard();
+    });
+</script>
+{% endblock %}

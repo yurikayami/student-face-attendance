@@ -1,0 +1,754 @@
+
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Hồ Sơ Người Dùng</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        /* -------------------------------------- */
+        /* CSS CHO GIAO DIỆN HỒ SƠ CHUYÊN NGHIỆP */
+        /* -------------------------------------- */
+        
+        /* Khai báo biến CSS */
+        :root {
+            --primary: #4361ee;
+            --primary-light: #4895ef;
+            --secondary: #6c757d;
+            --success: #4cc9f0;
+            --danger: #f72585;
+            --warning: #f8961e;
+            --background-color: #f8f9fa;
+            --card-background: #ffffff;
+            --border-color: #e9ecef;
+            --text-color: #343a40;
+            --text-light: #6c757d;
+            --shadow: 0 4px 20px rgba(0, 0, 0, 0.08);
+            --shadow-hover: 0 8px 30px rgba(0, 0, 0, 0.12);
+            --radius: 12px;
+            --transition: all 0.3s ease;
+            --font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+
+        body {
+            font-family: var(--font-family);
+            background-color: var(--background-color);
+            color: var(--text-color);
+            line-height: 1.6;
+            padding: 20px;
+            min-height: 100vh;
+        }
+        
+        /* 1. Tiêu đề Trang */
+        .page-header {
+            text-align: center;
+            color: var(--primary);
+            padding: 20px 0 30px;
+            margin-bottom: 30px;
+            position: relative;
+        }
+        
+        .page-header:after {
+            content: '';
+            position: absolute;
+            bottom: 0;
+            left: 50%;
+            transform: translateX(-50%);
+            width: 100px;
+            height: 4px;
+            background: linear-gradient(to right, var(--primary), var(--success));
+            border-radius: 2px;
+        }
+        
+        .page-header h1 {
+            font-size: 2.2rem;
+            font-weight: 700;
+            margin-bottom: 10px;
+        }
+        
+        .page-header p {
+            color: var(--text-light);
+            font-size: 1.1rem;
+            max-width: 600px;
+            margin: 0 auto;
+        }
+        
+        .page-header i {
+            margin-right: 12px;
+            background: linear-gradient(135deg, var(--primary), var(--success));
+           
+            -webkit-text-fill-color: transparent;
+        }
+
+        /* 2. Thiết kế Card chính */
+        .profile-container {
+            max-width: 800px;
+            margin: 0 auto;
+        }
+        
+        .card {
+            background-color: var(--card-background);
+            border-radius: var(--radius);
+            box-shadow: var(--shadow);
+            padding: 0;
+            overflow: hidden;
+            transition: var(--transition);
+            margin-bottom: 25px;
+        }
+        
+        .card:hover {
+            box-shadow: var(--shadow-hover);
+        }
+        
+        .card-header {
+            background: linear-gradient(135deg, var(--primary), var(--primary-light));
+            color: white;
+            padding: 20px 30px;
+            display: flex;
+            align-items: center;
+        }
+        
+        .card-header i {
+            margin-right: 12px;
+            font-size: 1.3rem;
+        }
+        
+        .card-header h2 {
+            font-size: 1.4rem;
+            font-weight: 600;
+        }
+        
+        .card-body {
+            padding: 30px;
+        }
+
+        /* 3. Nhóm Input */
+        .input-group {
+            display: flex;
+            flex-direction: column;
+            margin-bottom: 25px;
+            position: relative;
+        }
+
+        .input-group label {
+            font-weight: 600;
+            margin-bottom: 8px;
+            color: var(--text-color);
+            font-size: 0.95em;
+            display: flex;
+            align-items: center;
+        }
+        
+        .input-group label i {
+            margin-right: 8px;
+            color: var(--primary);
+            width: 18px;
+            text-align: center;
+        }
+
+        .input-group input[type="text"],
+        .input-group input[type="email"],
+        .input-group input[type="password"] {
+            padding: 14px 16px;
+            border: 2px solid var(--border-color);
+            border-radius: 8px;
+            font-size: 1em;
+            transition: var(--transition);
+            width: 100%;
+        }
+
+        .input-group input:focus {
+            border-color: var(--primary);
+            box-shadow: 0 0 0 3px rgba(67, 97, 238, 0.15);
+            outline: none;
+        }
+
+        /* Input Readonly */
+        .input-group input[readonly] {
+            background: #f8f9fa !important;
+            color: var(--secondary) !important;
+            font-weight: 600 !important;
+            cursor: default;
+            border-color: #e9ecef;
+        }
+        
+        /* Validation styles */
+        .input-group.error input {
+            border-color: var(--danger);
+        }
+        
+        .input-group.success input {
+            border-color: var(--success);
+        }
+        
+        .input-message {
+            font-size: 0.85rem;
+            margin-top: 6px;
+            display: flex;
+            align-items: center;
+        }
+        
+        .input-message.error {
+            color: var(--danger);
+        }
+        
+        .input-message.success {
+            color: var(--success);
+        }
+        
+        .input-message i {
+            margin-right: 5px;
+        }
+
+        /* 4. Nút (Button) */
+        .btn {
+            padding: 14px 28px;
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+            font-size: 1em;
+            font-weight: 600;
+            transition: var(--transition);
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .btn-primary {
+            background: linear-gradient(135deg, var(--primary), var(--primary-light));
+            color: white;
+            box-shadow: 0 4px 12px rgba(67, 97, 238, 0.3);
+        }
+
+        .btn-primary:hover:not(:disabled) {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 16px rgba(67, 97, 238, 0.4);
+        }
+
+        .btn-primary:active {
+            transform: translateY(0);
+        }
+        
+        .btn-primary:disabled {
+            background: #a0c3ec;
+            cursor: not-allowed;
+            transform: none;
+            box-shadow: none;
+        }
+        
+        .btn i {
+            margin-right: 8px;
+        }
+        
+        .action-buttons {
+            display: flex;
+            justify-content: flex-end;
+            margin-top: 10px;
+            gap: 15px;
+        }
+
+        /* 5. Hệ thống Thông báo (Notification System) */
+        #notification-container {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            z-index: 1050;
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+            max-width: 400px;
+        }
+
+        .notification {
+            padding: 16px 20px;
+            border-radius: 10px;
+            color: white;
+            font-weight: 500;
+            box-shadow: 0 6px 20px rgba(0, 0, 0, 0.15);
+            min-width: 300px;
+            opacity: 0;
+            transform: translateX(100%);
+            transition: all 0.5s cubic-bezier(0.68, -0.55, 0.27, 1.55);
+            display: flex;
+            align-items: center;
+            position: relative;
+            overflow: hidden;
+        }
+        
+        .notification:before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 5px;
+            height: 100%;
+        }
+
+        .notification.show {
+            opacity: 1;
+            transform: translateX(0);
+        }
+        
+        .notification.hiding {
+            opacity: 0;
+            transform: translateX(100%);
+        }
+
+        .notification.success {
+            background-color: var(--success);
+        }
+        
+        .notification.success:before {
+            background-color: rgba(255, 255, 255, 0.3);
+        }
+
+        .notification.error {
+            background-color: var(--danger);
+        }
+        
+        .notification.error:before {
+            background-color: rgba(255, 255, 255, 0.3);
+        }
+        
+        .notification i {
+            margin-right: 12px;
+            font-size: 1.2rem;
+        }
+        
+        .notification .close-btn {
+            margin-left: auto;
+            background: none;
+            border: none;
+            color: white;
+            cursor: pointer;
+            font-size: 1.1rem;
+            opacity: 0.8;
+            transition: opacity 0.2s;
+        }
+        
+        .notification .close-btn:hover {
+            opacity: 1;
+        }
+
+        /* 6. Loading Spinner */
+        .spinner {
+            display: inline-block;
+            width: 20px;
+            height: 20px;
+            border: 3px solid rgba(255, 255, 255, 0.3);
+            border-radius: 50%;
+            border-top-color: #fff;
+            animation: spin 1s ease-in-out infinite;
+            margin-right: 10px;
+        }
+        
+        @keyframes spin {
+            to { transform: rotate(360deg); }
+        }
+        
+        /* 7. Responsive Design */
+        @media (max-width: 768px) {
+            body {
+                padding: 15px;
+            }
+            
+            .page-header h1 {
+                font-size: 1.8rem;
+            }
+            
+            .page-header p {
+                font-size: 1rem;
+            }
+            
+            .card-body {
+                padding: 20px;
+            }
+            
+            .action-buttons {
+                flex-direction: column;
+            }
+            
+            .btn {
+                width: 100%;
+                margin-bottom: 10px;
+            }
+            
+            #notification-container {
+                left: 15px;
+                right: 15px;
+                max-width: none;
+            }
+            
+            .notification {
+                min-width: auto;
+            }
+        }
+        
+        @media (max-width: 480px) {
+            .page-header h1 {
+                font-size: 1.5rem;
+            }
+            
+            .card-header {
+                padding: 15px 20px;
+            }
+            
+            .card-header h2 {
+                font-size: 1.2rem;
+            }
+            
+            .card-body {
+                padding: 15px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="page-header">
+        <h1><i class="fas fa-user-circle"></i> Hồ Sơ Cá Nhân</h1>
+        <p>Quản lý thông tin cá nhân và bảo mật tài khoản của bạn</p>
+    </div>
+    
+    <div class="profile-container">
+        <div class="card">
+            <div class="card-header">
+                <i class="fas fa-info-circle"></i>
+                <h2>Thông Tin Cơ Bản</h2>
+            </div>
+            <div class="card-body">
+                <div id="notification-container"></div>
+                
+                <form id="profileForm">
+                    <input type="hidden" id="currentUserId" value="12345">
+                    
+                    <div class="input-group">
+                        <label><i class="fas fa-user"></i> Tên đăng nhập:</label>
+                        <input type="text" id="profileUsername" value="nguyenvana" readonly>
+                    </div>
+                    
+                    <div class="input-group">
+                        <label><i class="fas fa-signature"></i> Họ và tên:</label>
+                        <input type="text" id="profileHoTen" value="Nguyễn Văn A" required>
+                        <div class="input-message"></div>
+                    </div>
+                    
+                    <div class="input-group">
+                        <label><i class="fas fa-envelope"></i> Email:</label>
+                        <input type="email" id="profileEmail" value="nguyenvana@example.com" required>
+                        <div class="input-message"></div>
+                    </div>
+                    
+                    <div class="input-group">
+                        <label><i class="fas fa-user-tag"></i> Vai trò:</label>
+                        <input type="text" value="Quản trị viên" readonly>
+                    </div>
+                </form>
+            </div>
+        </div>
+        
+        <div class="card">
+            <div class="card-header">
+                <i class="fas fa-key"></i>
+                <h2>Đổi Mật Khẩu</h2>
+            </div>
+            <div class="card-body">
+                <div class="input-group">
+                    <label><i class="fas fa-lock"></i> Mật khẩu mới (Để trống nếu không đổi):</label>
+                    <input type="password" id="profileNewPassword" placeholder="Nhập mật khẩu mới">
+                    <div class="input-message"></div>
+                </div>
+                
+                <div class="input-group">
+                    <label><i class="fas fa-lock"></i> Xác nhận mật khẩu mới:</label>
+                    <input type="password" id="profileConfirmPassword" placeholder="Xác nhận mật khẩu mới">
+                    <div class="input-message"></div>
+                </div>
+                
+                <div class="action-buttons">
+                    <button type="button" class="btn btn-primary" id="saveProfileBtn">
+                        <i class="fas fa-save"></i> Lưu Thay Đổi
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        /* -------------------------------------- */
+        /* JAVASCRIPT XỬ LÝ SỰ KIỆN VÀ THÔNG BÁO */
+        /* -------------------------------------- */
+
+        /**
+         * Hiển thị thông báo (Toast/Snackbar)
+         */
+        function showNotification(message, type) {
+            const container = document.getElementById('notification-container');
+            if (!container) return;
+
+            const notification = document.createElement('div');
+            notification.className = `notification ${type}`;
+            
+            // Icon tương ứng với loại thông báo
+            const icon = type === 'success' ? 
+                '<i class="fas fa-check-circle"></i>' : 
+                '<i class="fas fa-exclamation-circle"></i>';
+                
+            notification.innerHTML = `
+                ${icon}
+                <span>${message}</span>
+                <button class="close-btn"><i class="fas fa-times"></i></button>
+            `;
+
+            container.appendChild(notification);
+
+            // Hiển thị
+            setTimeout(() => {
+                notification.classList.add('show');
+            }, 10);
+            
+            // Xử lý nút đóng
+            const closeBtn = notification.querySelector('.close-btn');
+            closeBtn.addEventListener('click', () => {
+                notification.classList.remove('show');
+                notification.classList.add('hiding');
+                setTimeout(() => {
+                    notification.remove();
+                }, 500);
+            });
+
+            // Tự động ẩn sau 5 giây
+            const autoHide = setTimeout(() => {
+                notification.classList.remove('show');
+                notification.classList.add('hiding');
+                setTimeout(() => {
+                    notification.remove();
+                }, 500);
+            }, 5000);
+            
+            // Hủy autoHide nếu người dùng hover
+            notification.addEventListener('mouseenter', () => {
+                clearTimeout(autoHide);
+            });
+            
+            notification.addEventListener('mouseleave', () => {
+                setTimeout(() => {
+                    notification.classList.remove('show');
+                    notification.classList.add('hiding');
+                    setTimeout(() => {
+                        notification.remove();
+                    }, 500);
+                }, 3000);
+            });
+        }
+        
+        /**
+         * Hiển thị thông báo lỗi cho input
+         */
+        function showInputError(inputId, message) {
+            const inputGroup = document.getElementById(inputId).closest('.input-group');
+            const messageEl = inputGroup.querySelector('.input-message');
+            
+            inputGroup.classList.remove('success');
+            inputGroup.classList.add('error');
+            messageEl.innerHTML = `<i class="fas fa-exclamation-circle"></i> ${message}`;
+            messageEl.className = 'input-message error';
+        }
+        
+        /**
+         * Hiển thị thông báo thành công cho input
+         */
+        function showInputSuccess(inputId) {
+            const inputGroup = document.getElementById(inputId).closest('.input-group');
+            const messageEl = inputGroup.querySelector('.input-message');
+            
+            inputGroup.classList.remove('error');
+            inputGroup.classList.add('success');
+            messageEl.innerHTML = `<i class="fas fa-check-circle"></i> Hợp lệ`;
+            messageEl.className = 'input-message success';
+        }
+        
+        /**
+         * Xóa thông báo input
+         */
+        function clearInputMessage(inputId) {
+            const inputGroup = document.getElementById(inputId).closest('.input-group');
+            const messageEl = inputGroup.querySelector('.input-message');
+            
+            inputGroup.classList.remove('error', 'success');
+            messageEl.innerHTML = '';
+            messageEl.className = 'input-message';
+        }
+        
+        /**
+         * Kiểm tra tính hợp lệ của form
+         */
+        function validateForm() {
+            let isValid = true;
+            
+            // Kiểm tra họ tên
+            const hoTen = document.getElementById('profileHoTen').value.trim();
+            if (!hoTen) {
+                showInputError('profileHoTen', 'Vui lòng nhập họ và tên');
+                isValid = false;
+            } else {
+                showInputSuccess('profileHoTen');
+            }
+            
+            // Kiểm tra email
+            const email = document.getElementById('profileEmail').value.trim();
+            const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+            if (!email) {
+                showInputError('profileEmail', 'Vui lòng nhập email');
+                isValid = false;
+            } else if (!emailRegex.test(email)) {
+                showInputError('profileEmail', 'Email không hợp lệ');
+                isValid = false;
+            } else {
+                showInputSuccess('profileEmail');
+            }
+            
+            // Kiểm tra mật khẩu
+            const newPassword = document.getElementById('profileNewPassword').value;
+            const confirmPassword = document.getElementById('profileConfirmPassword').value;
+            
+            if (newPassword || confirmPassword) {
+                if (newPassword.length < 6) {
+                    showInputError('profileNewPassword', 'Mật khẩu phải có ít nhất 6 ký tự');
+                    isValid = false;
+                } else {
+                    showInputSuccess('profileNewPassword');
+                }
+                
+                if (newPassword !== confirmPassword) {
+                    showInputError('profileConfirmPassword', 'Mật khẩu xác nhận không khớp');
+                    isValid = false;
+                } else if (confirmPassword) {
+                    showInputSuccess('profileConfirmPassword');
+                }
+            } else {
+                clearInputMessage('profileNewPassword');
+                clearInputMessage('profileConfirmPassword');
+            }
+            
+            return isValid;
+        }
+        
+        // Logic chính
+        document.addEventListener('DOMContentLoaded', () => {
+            document.getElementById('saveProfileBtn').addEventListener('click', handleProfileUpdate);
+            
+            // Thêm sự kiện input để validate real-time
+            document.getElementById('profileHoTen').addEventListener('input', function() {
+                if (this.value.trim()) {
+                    showInputSuccess('profileHoTen');
+                } else {
+                    showInputError('profileHoTen', 'Vui lòng nhập họ và tên');
+                }
+            });
+            
+            document.getElementById('profileEmail').addEventListener('input', function() {
+                const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+                if (!this.value.trim()) {
+                    showInputError('profileEmail', 'Vui lòng nhập email');
+                } else if (!emailRegex.test(this.value)) {
+                    showInputError('profileEmail', 'Email không hợp lệ');
+                } else {
+                    showInputSuccess('profileEmail');
+                }
+            });
+            
+            document.getElementById('profileNewPassword').addEventListener('input', function() {
+                if (this.value && this.value.length < 6) {
+                    showInputError('profileNewPassword', 'Mật khẩu phải có ít nhất 6 ký tự');
+                } else if (this.value) {
+                    showInputSuccess('profileNewPassword');
+                } else {
+                    clearInputMessage('profileNewPassword');
+                }
+                
+                // Kiểm tra xác nhận mật khẩu
+                const confirmPassword = document.getElementById('profileConfirmPassword').value;
+                if (confirmPassword) {
+                    if (this.value !== confirmPassword) {
+                        showInputError('profileConfirmPassword', 'Mật khẩu xác nhận không khớp');
+                    } else {
+                        showInputSuccess('profileConfirmPassword');
+                    }
+                }
+            });
+            
+            document.getElementById('profileConfirmPassword').addEventListener('input', function() {
+                const newPassword = document.getElementById('profileNewPassword').value;
+                if (this.value && newPassword !== this.value) {
+                    showInputError('profileConfirmPassword', 'Mật khẩu xác nhận không khớp');
+                } else if (this.value) {
+                    showInputSuccess('profileConfirmPassword');
+                } else {
+                    clearInputMessage('profileConfirmPassword');
+                }
+            });
+        });
+
+        async function handleProfileUpdate(e) {
+            e.preventDefault();
+            
+            if (!validateForm()) {
+                showNotification('❌ Vui lòng kiểm tra lại thông tin đã nhập', 'error');
+                return;
+            }
+            
+            const hoTen = document.getElementById('profileHoTen').value.trim();
+            const email = document.getElementById('profileEmail').value.trim();
+            const newPassword = document.getElementById('profileNewPassword').value;
+            const userId = document.getElementById('currentUserId').value;
+            
+            const data = {
+                ho_ten: hoTen,
+                email: email
+            };
+
+            if (newPassword) {
+                data.password = newPassword;
+            }
+
+            const saveProfileBtn = document.getElementById('saveProfileBtn');
+            const originalText = saveProfileBtn.innerHTML;
+            saveProfileBtn.disabled = true;
+            saveProfileBtn.innerHTML = '<span class="spinner"></span> Đang lưu...';
+
+            try {
+                // Giả lập API call với độ trễ
+                await new Promise(resolve => setTimeout(resolve, 1500));
+                
+                // Giả lập kết quả thành công
+                const success = Math.random() > 0.2; // 80% thành công để demo
+                
+                if (success) {
+                    showNotification('✅ Cập nhật hồ sơ thành công!', 'success');
+                    // Xóa trường mật khẩu
+                    document.getElementById('profileNewPassword').value = '';
+                    document.getElementById('profileConfirmPassword').value = '';
+                    clearInputMessage('profileNewPassword');
+                    clearInputMessage('profileConfirmPassword');
+                } else {
+                    showNotification('❌ Lỗi: Không thể cập nhật hồ sơ. Vui lòng thử lại.', 'error');
+                }
+
+            } catch (error) {
+                console.error('Lỗi cập nhật hồ sơ:', error);
+                showNotification('❌ Lỗi kết nối khi cập nhật hồ sơ', 'error');
+            } finally {
+                saveProfileBtn.disabled = false;
+                saveProfileBtn.innerHTML = originalText;
+            }
+        }
+    </script>
+</body>
+</html>

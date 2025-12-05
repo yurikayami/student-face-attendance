@@ -1,0 +1,755 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Đăng nhập - Hệ thống điểm danh thông minh</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        :root {
+            --primary-color: #5e35b1; /* Tím đậm chuyên nghiệp */
+            --primary-light: #7e57c2;
+            --secondary-color: #4527a0;
+            --background-gradient: linear-gradient(135deg, var(--primary-color) 0%, var(--secondary-color) 100%);
+            --input-border-color: #e0e0e0;
+            --input-focus-color: #5e35b1;
+            --error-bg: #ffebee;
+            --error-color: #d32f2f;
+            --success-color: #4caf50;
+            --text-primary: #212121;
+            --text-secondary: #757575;
+            --bg-color: #ffffff;
+            --card-shadow: 0 10px 30px rgba(0, 0, 0, 0.1), 0 1px 8px rgba(0, 0, 0, 0.05);
+            --transition: all 0.3s cubic-bezier(0.25, 0.8, 0.25, 1);
+        }
+
+        [data-theme="dark"] {
+            --primary-color: #7e57c2;
+            --primary-light: #9575cd;
+            --secondary-color: #5e35b1;
+            --input-border-color: #424242;
+            --input-focus-color: #7e57c2;
+            --error-bg: #4a1c1c;
+            --error-color: #f44336;
+            --success-color: #66bb6a;
+            --text-primary: #f5f5f5;
+            --text-secondary: #bdbdbd;
+            --bg-color: #121212;
+            --card-shadow: 0 10px 30px rgba(0, 0, 0, 0.3), 0 1px 8px rgba(0, 0, 0, 0.2);
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Inter', 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: var(--background-gradient);
+            height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: var(--text-primary);
+            transition: var(--transition);
+        }
+
+        .login-container {
+            background: var(--bg-color);
+            padding: 40px;
+            border-radius: 20px;
+            box-shadow: var(--card-shadow);
+            width: 100%;
+            max-width: 440px;
+            transition: var(--transition);
+            position: relative;
+            overflow: hidden;
+        }
+        
+        .login-container::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            height: 4px;
+            background: var(--background-gradient);
+        }
+        
+        .login-container:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 15px 40px rgba(0, 0, 0, 0.15);
+        }
+
+        .logo {
+            text-align: center;
+            margin-bottom: 35px;
+        }
+
+        .logo h1 {
+            color: var(--text-primary);
+            font-size: 28px;
+            font-weight: 700;
+            margin-bottom: 8px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 10px;
+        }
+
+        .logo p {
+            color: var(--text-secondary);
+            font-size: 15px;
+        }
+
+        .form-group {
+            margin-bottom: 25px;
+            position: relative;
+        }
+
+        .form-group label {
+            display: block;
+            margin-bottom: 8px;
+            color: var(--text-primary);
+            font-weight: 600;
+            font-size: 14px;
+        }
+        
+        .password-toggle-group {
+            position: relative;
+            width: 100%;
+        }
+
+        .form-group input {
+            width: 100%;
+            padding: 14px 18px;
+            border: 1px solid var(--input-border-color);
+            border-radius: 10px;
+            font-size: 16px;
+            transition: var(--transition);
+            background: var(--bg-color);
+            color: var(--text-primary);
+        }
+
+        .password-toggle-group input {
+            padding-right: 45px; 
+        }
+
+        .form-group input:focus {
+            outline: none;
+            border-color: var(--input-focus-color);
+            box-shadow: 0 0 0 3px rgba(94, 53, 177, 0.1);
+        }
+
+        .toggle-password {
+            position: absolute;
+            top: 50%;
+            right: 15px;
+            transform: translateY(-50%);
+            cursor: pointer;
+            color: var(--text-secondary);
+            transition: var(--transition);
+            font-size: 18px;
+            line-height: 1;
+            z-index: 10;
+            background: none;
+            border: none;
+        }
+
+        .toggle-password:hover {
+            color: var(--primary-color);
+        }
+
+        .captcha-group {
+            display: flex;
+            gap: 15px;
+            align-items: stretch;
+        }
+
+        .captcha-display {
+            flex: 1;
+            background: var(--bg-color);
+            border: 2px dashed var(--primary-light);
+            border-radius: 10px;
+            padding: 10px 15px;
+            text-align: center;
+            font-family: 'Georgia', serif; 
+            font-size: 24px;
+            font-style: italic;
+            font-weight: 800;
+            letter-spacing: 4px;
+            color: var(--text-primary);
+            user-select: none;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            height: 100%;
+            min-height: 50px;
+            position: relative; 
+            overflow: hidden; 
+        }
+
+        .captcha-display span {
+             display: inline-block;
+             line-height: 1;
+             z-index: 10;
+             position: relative;
+        }
+
+        .refresh-captcha {
+            background: var(--primary-color);
+            color: white;
+            border: none;
+            border-radius: 10px;
+            padding: 0 15px;
+            cursor: pointer;
+            transition: var(--transition);
+            font-size: 20px;
+            line-height: 1;
+        }
+
+        .refresh-captcha:hover {
+            background: var(--secondary-color);
+            transform: scale(1.05);
+        }
+
+        .login-options {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 25px;
+            font-size: 14px;
+        }
+
+        .remember-me {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            color: var(--text-secondary);
+        }
+
+        .remember-me input {
+            width: auto;
+        }
+
+        .forgot-password {
+            color: var(--primary-color);
+            text-decoration: none;
+            font-weight: 500;
+            transition: var(--transition);
+        }
+
+        .forgot-password:hover {
+            color: var(--secondary-color);
+            text-decoration: underline;
+        }
+
+        .login-btn {
+            width: 100%;
+            background: var(--background-gradient);
+            color: white;
+            border: none;
+            padding: 15px;
+            border-radius: 10px;
+            font-size: 18px;
+            font-weight: 700;
+            cursor: pointer;
+            transition: var(--transition);
+            box-shadow: 0 5px 15px rgba(94, 53, 177, 0.3);
+            position: relative;
+            overflow: hidden;
+        }
+
+        .login-btn::after {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(255, 255, 255, 0.1);
+            transform: translateX(-100%);
+            transition: transform 0.3s;
+        }
+
+        .login-btn:hover::after {
+            transform: translateX(0);
+        }
+
+        .login-btn:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 8px 20px rgba(94, 53, 177, 0.4);
+        }
+
+        .login-btn:active {
+            transform: translateY(-1px);
+            box-shadow: 0 3px 10px rgba(94, 53, 177, 0.2);
+        }
+
+        .login-btn:disabled {
+            opacity: 0.6;
+            cursor: not-allowed;
+            transform: none;
+            box-shadow: none;
+        }
+
+        .error-message {
+            background: var(--error-bg);
+            color: var(--error-color);
+            border: 1px solid var(--error-color);
+            padding: 12px;
+            border-radius: 8px;
+            margin-bottom: 20px;
+            text-align: center;
+            display: none;
+            font-weight: 500;
+            transition: var(--transition);
+        }
+
+        .success-message {
+            background: rgba(76, 175, 80, 0.1);
+            color: var(--success-color);
+            border: 1px solid var(--success-color);
+            padding: 12px;
+            border-radius: 8px;
+            margin-bottom: 20px;
+            text-align: center;
+            display: none;
+            font-weight: 500;
+            transition: var(--transition);
+        }
+
+        .loading {
+            display: none;
+            text-align: center;
+            margin-top: 15px;
+            font-size: 14px;
+            color: var(--text-secondary);
+        }
+
+        .spinner {
+            border: 4px solid rgba(0, 0, 0, 0.1);
+            border-top: 4px solid var(--primary-color);
+            border-radius: 50%;
+            width: 25px;
+            height: 25px;
+            animation: spin 1s linear infinite;
+            margin: 0 auto 5px;
+        }
+
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+
+        .system-info {
+            text-align: center;
+            margin-top: 30px;
+            padding-top: 20px;
+            border-top: 1px dashed var(--input-border-color);
+            color: var(--text-secondary);
+            font-size: 13px;
+        }
+
+        .theme-toggle {
+            position: absolute;
+            top: 20px;
+            right: 20px;
+            background: none;
+            border: none;
+            color: var(--text-secondary);
+            cursor: pointer;
+            font-size: 18px;
+            transition: var(--transition);
+        }
+
+        .theme-toggle:hover {
+            color: var(--primary-color);
+        }
+
+        @media (max-width: 480px) {
+            .login-container {
+                padding: 30px 20px;
+                margin: 0 15px;
+            }
+            
+            .captcha-group {
+                flex-direction: column;
+            }
+            
+            .refresh-captcha {
+                padding: 10px;
+                width: 100%;
+            }
+            
+            .login-options {
+                flex-direction: column;
+                gap: 15px;
+                align-items: flex-start;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="login-container">
+        <button class="theme-toggle" id="themeToggle">
+            <i class="fas fa-moon"></i>
+        </button>
+
+        <div class="logo">
+            <h1><i class="fas fa-fingerprint"></i> Đăng nhập</h1>
+            <p>Hệ thống điểm danh khuôn mặt thông minh</p>
+        </div>
+
+        <div class="error-message" id="errorMessage"></div>
+        <div class="success-message" id="successMessage"></div>
+
+        <form id="loginForm">
+            <div class="form-group">
+                <label for="username"><i class="fas fa-user"></i> Tên đăng nhập</label>
+                <input type="text" id="username" name="username" required placeholder="Nhập tên đăng nhập" autocomplete="username">
+            </div>
+
+            <div class="form-group">
+                <label for="password"><i class="fas fa-lock"></i> Mật khẩu</label>
+                <div class="password-toggle-group">
+                    <input type="password" id="password" name="password" required placeholder="Nhập mật khẩu" autocomplete="current-password">
+                    <button type="button" class="toggle-password" id="togglePassword">
+                        <i class="fas fa-eye"></i>
+                    </button>
+                </div>
+            </div>
+
+            <div class="form-group">
+                <label for="captcha"><i class="fas fa-shield-alt"></i> Mã xác thực</label>
+                <div class="captcha-group">
+                    <div class="captcha-display" id="captchaDisplay"></div>
+                    <button type="button" class="refresh-captcha" id="refreshCaptcha">
+                        <i class="fas fa-redo-alt"></i>
+                    </button>
+                </div>
+                <input type="text" id="captcha" name="captcha" required placeholder="Nhập mã trên" style="margin-top: 10px;">
+            </div>
+
+            <div class="login-options">
+                <label class="remember-me">
+                    <input type="checkbox" id="rememberMe">
+                    Ghi nhớ đăng nhập
+                </label>
+                <a href="#" class="forgot-password">Quên mật khẩu?</a>
+            </div>
+
+            <button type="submit" class="login-btn" id="loginBtn">
+                <span id="loginText">Đăng nhập</span>
+            </button>
+        </form>
+
+        <div class="loading" id="loading">
+            <div class="spinner"></div>
+            <p>Đang xác thực...</p>
+        </div>
+
+        <div class="system-info">
+            <p>Hệ thống điểm danh thông minh &copy; 2024</p>
+            <p>Phiên bản 2.1.0</p>
+        </div>
+    </div>
+
+    <script>
+        // Khai báo biến toàn cục
+        let currentCaptcha = '';
+        let isDarkMode = false;
+
+        // Lấy các phần tử DOM
+        const captchaDisplay = document.getElementById('captchaDisplay');
+        const loginBtn = document.getElementById('loginBtn');
+        const loadingDiv = document.getElementById('loading');
+        const loginForm = document.getElementById('loginForm');
+        const captchaInput = document.getElementById('captcha');
+        const errorMessageDiv = document.getElementById('errorMessage');
+        const successMessageDiv = document.getElementById('successMessage');
+        const passwordInput = document.getElementById('password');
+        const togglePassword = document.getElementById('togglePassword');
+        const themeToggle = document.getElementById('themeToggle');
+        const rememberMe = document.getElementById('rememberMe');
+        const loginText = document.getElementById('loginText');
+        const refreshCaptchaBtn = document.getElementById('refreshCaptcha');
+
+        // Khởi tạo theme từ localStorage
+        function initializeTheme() {
+            if (localStorage.getItem('theme') === 'dark') {
+                enableDarkMode();
+            }
+        }
+
+        // Xử lý chuyển đổi theme
+        function setupThemeToggle() {
+            themeToggle.addEventListener('click', function() {
+                if (isDarkMode) {
+                    disableDarkMode();
+                } else {
+                    enableDarkMode();
+                }
+            });
+        }
+
+        function enableDarkMode() {
+            document.documentElement.setAttribute('data-theme', 'dark');
+            themeToggle.innerHTML = '<i class="fas fa-sun"></i>';
+            isDarkMode = true;
+            localStorage.setItem('theme', 'dark');
+        }
+
+        function disableDarkMode() {
+            document.documentElement.removeAttribute('data-theme');
+            themeToggle.innerHTML = '<i class="fas fa-moon"></i>';
+            isDarkMode = false;
+            localStorage.setItem('theme', 'light');
+        }
+
+        // Khởi tạo CAPTCHA
+        function initializeCaptcha() {
+            refreshCaptchaBtn.addEventListener('click', refreshCaptcha);
+            refreshCaptcha();
+        }
+
+        // Làm mới CAPTCHA
+        function refreshCaptcha() {
+            // Ưu tiên gọi API nếu có
+            fetch('/api/refresh-captcha')
+                .then(response => {
+                    if (!response.ok) {
+                        throw new Error('Network response was not ok');
+                    }
+                    return response.json();
+                })
+                .then(data => {
+                    if (data.captcha) {
+                        currentCaptcha = data.captcha;
+                        renderCaptcha(currentCaptcha);
+                    } else {
+                        throw new Error('Invalid CAPTCHA response');
+                    }
+                })
+                .catch(error => {
+                    console.error('Lỗi làm mới captcha API:', error);
+                    generateLocalCaptcha();
+                });
+        }
+
+        // Tạo CAPTCHA local
+        function generateLocalCaptcha() {
+            const chars = 'ABCDEFGHJKLMNPQRSTUVWXYZabcdefghijkmnopqrstuvwxyz23456789';
+            let captcha = '';
+            for (let i = 0; i < 6; i++) {
+                captcha += chars.charAt(Math.floor(Math.random() * chars.length));
+            }
+            currentCaptcha = captcha;
+            renderCaptcha(currentCaptcha);
+        }
+
+        // Hiển thị CAPTCHA
+        function renderCaptcha(text) {
+            captchaDisplay.innerHTML = '';
+
+            // Thêm nhiễu nền
+            for (let i = 0; i < 5; i++) {
+                const line = document.createElement('div');
+                line.style.position = 'absolute';
+                line.style.width = '100%';
+                line.style.height = '1px';
+                line.style.background = `rgba(${Math.floor(Math.random() * 200)}, ${Math.floor(Math.random() * 200)}, ${Math.floor(Math.random() * 200)}, 0.4)`;
+                line.style.top = `${Math.floor(Math.random() * 100)}%`;
+                line.style.transform = `rotate(${Math.floor(Math.random() * 10 - 5)}deg)`;
+                captchaDisplay.appendChild(line);
+            }
+            
+            // Render từng ký tự
+            for (let i = 0; i < text.length; i++) {
+                const charSpan = document.createElement('span');
+                charSpan.textContent = text[i];
+                
+                charSpan.style.display = 'inline-block';
+                charSpan.style.transform = `rotate(${Math.floor(Math.random() * 15 - 7)}deg)`;
+                charSpan.style.color = `rgb(${Math.floor(Math.random() * 150)}, ${Math.floor(Math.random() * 150)}, ${Math.floor(Math.random() * 150)})`;
+                charSpan.style.fontSize = `${20 + Math.random() * 10}px`;
+                charSpan.style.padding = '0 2px';
+
+                captchaDisplay.appendChild(charSpan);
+            }
+        }
+
+        // Xử lý đăng nhập
+        function setupLoginHandler() {
+            loginForm.addEventListener('submit', function(e) {
+                e.preventDefault();
+                
+                const username = document.getElementById('username').value.trim();
+                const password = document.getElementById('password').value;
+                const captcha = captchaInput.value.trim();
+                const remember = rememberMe.checked;
+                
+                // Kiểm tra dữ liệu đầu vào
+                if (!username || !password || !captcha) {
+                    showError('Vui lòng điền đầy đủ thông tin.');
+                    return;
+                }
+                
+                // Kiểm tra CAPTCHA
+                if (captcha.toLowerCase() !== currentCaptcha.toLowerCase()) {
+                    showError('Mã xác thực không đúng. Vui lòng thử lại.');
+                    refreshCaptcha();
+                    captchaInput.value = '';
+                    return;
+                }
+                
+                // Hiển thị loading
+                showLoading(true);
+
+                // Gửi request đăng nhập
+                fetch('/api/login', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({
+                        username: username,
+                        password: password,
+                        captcha: captcha,
+                        remember: remember
+                    })
+                })
+                .then(response => {
+                    if (!response.ok) {
+                        throw new Error('Network response was not ok');
+                    }
+                    return response.json();
+                })
+                .then(data => {
+                    if (data.success) {
+                        // Đăng nhập thành công
+                        handleLoginSuccess(username, remember, data.redirect_url);
+                    } else {
+                        // Hiển thị lỗi
+                        handleLoginError(data);
+                    }
+                })
+                .catch(error => {
+                    console.error('Lỗi đăng nhập:', error);
+                    showError('Lỗi kết nối đến server. Vui lòng kiểm tra lại mạng.');
+                    refreshCaptcha();
+                    captchaInput.value = '';
+                })
+                .finally(() => {
+                    showLoading(false);
+                });
+            });
+        }
+
+        // Xử lý đăng nhập thành công
+        function handleLoginSuccess(username, remember, redirectUrl) {
+            showSuccess('Đăng nhập thành công! Đang chuyển hướng...');
+            
+            // Lưu thông tin đăng nhập nếu được chọn
+            if (remember) {
+                localStorage.setItem('rememberedUser', username);
+            } else {
+                localStorage.removeItem('rememberedUser');
+            }
+            
+            // Chuyển hướng sau 1.5 giây
+            setTimeout(() => {
+                window.location.href = redirectUrl || '/dashboard';
+            }, 1500);
+        }
+
+        // Xử lý lỗi đăng nhập
+        function handleLoginError(data) {
+            showError(data.message || 'Tên đăng nhập, mật khẩu hoặc mã xác thực không đúng.');
+            
+            // Làm mới captcha
+            if (data.new_captcha) {
+                currentCaptcha = data.new_captcha;
+                renderCaptcha(currentCaptcha);
+            } else {
+                refreshCaptcha();
+            }
+            
+            // Xóa captcha input
+            captchaInput.value = '';
+        }
+
+        // Hiển thị/ẩn loading
+        function showLoading(show) {
+            if (show) {
+                loadingDiv.style.display = 'block';
+                loginBtn.disabled = true;
+                loginText.textContent = 'Đang xác thực...';
+            } else {
+                loadingDiv.style.display = 'none';
+                loginBtn.disabled = false;
+                loginText.textContent = 'Đăng nhập';
+            }
+        }
+
+        // Hiển thị thông báo lỗi
+        function showError(message) {
+            errorMessageDiv.textContent = message;
+            errorMessageDiv.style.display = 'block';
+            successMessageDiv.style.display = 'none';
+            
+            // Ẩn thông báo lỗi sau 5 giây
+            setTimeout(() => {
+                errorMessageDiv.style.display = 'none';
+            }, 5000);
+        }
+
+        // Hiển thị thông báo thành công
+        function showSuccess(message) {
+            successMessageDiv.textContent = message;
+            successMessageDiv.style.display = 'block';
+            errorMessageDiv.style.display = 'none';
+            
+            // Ẩn thông báo thành công sau 3 giây
+            setTimeout(() => {
+                successMessageDiv.style.display = 'none';
+            }, 3000);
+        }
+
+        // Xử lý hiển thị/ẩn mật khẩu
+        function setupPasswordToggle() {
+            togglePassword.addEventListener('click', function() {
+                const type = passwordInput.getAttribute('type') === 'password' ? 'text' : 'password';
+                passwordInput.setAttribute('type', type);
+                
+                // Thay đổi icon
+                this.innerHTML = type === 'password' ? '<i class="fas fa-eye"></i>' : '<i class="fas fa-eye-slash"></i>';
+            });
+        }
+
+        // Khôi phục thông tin đăng nhập đã lưu
+        function restoreRememberedUser() {
+            const rememberedUser = localStorage.getItem('rememberedUser');
+            if (rememberedUser) {
+                document.getElementById('username').value = rememberedUser;
+                rememberMe.checked = true;
+            }
+        }
+
+        // Khởi tạo ứng dụng
+        function initializeApp() {
+            initializeTheme();
+            setupThemeToggle();
+            initializeCaptcha();
+            setupLoginHandler();
+            setupPasswordToggle();
+            restoreRememberedUser();
+        }
+
+        // Khởi chạy ứng dụng khi DOM đã tải xong
+        document.addEventListener('DOMContentLoaded', initializeApp);
+    </script>
+</body>
+</html>
