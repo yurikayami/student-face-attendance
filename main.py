@@ -132,11 +132,19 @@ def get_conn():
     finally:
         conn.close()
 
+def add_column_if_not_exists(cursor, table_name, column_name, column_type):
+    """Thêm cột vào bảng nếu chưa tồn tại"""
+    try:
+        cursor.execute(f"SELECT {column_name} FROM {table_name} LIMIT 1")
+    except sqlite3.OperationalError:
+        print(f"🔧 Đang thêm cột '{column_name}' vào bảng '{table_name}'...")
+        cursor.execute(f"ALTER TABLE {table_name} ADD COLUMN {column_name} {column_type}")
+
 def ensure_db():
     with get_conn() as conn:
         cur = conn.cursor()
         
-        # Bảng sinh_vien - 🛠️ Đã bỏ DEFAULT CURRENT_TIMESTAMP để kiểm soát thời gian từ Python
+        # Bảng sinh_vien
         cur.execute("""
             CREATE TABLE IF NOT EXISTS sinh_vien (
                 id_sv INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -149,12 +157,20 @@ def ensure_db():
                 so_dien_thoai VARCHAR(15),
                 email VARCHAR(100),
                 trang_thai TEXT DEFAULT 'Đang học',
-                created_at DATETIME, -- Giá trị sẽ được cung cấp từ Python
-                updated_at DATETIME  -- Giá trị sẽ được cung cấp từ Python
+                created_at DATETIME,
+                updated_at DATETIME
             )
         """)
         
-        # Bảng diem_danh - 🛠️ Đã bỏ DEFAULT CURRENT_TIMESTAMP để kiểm soát thời gian từ Python
+        # Migration cho sinh_vien
+        add_column_if_not_exists(cur, "sinh_vien", "created_at", "DATETIME")
+        add_column_if_not_exists(cur, "sinh_vien", "updated_at", "DATETIME")
+        add_column_if_not_exists(cur, "sinh_vien", "gioi_tinh", "TEXT")
+        add_column_if_not_exists(cur, "sinh_vien", "khoa", "VARCHAR(50)")
+        add_column_if_not_exists(cur, "sinh_vien", "nganh_hoc", "VARCHAR(100)")
+        add_column_if_not_exists(cur, "sinh_vien", "email", "VARCHAR(100)")
+        
+        # Bảng diem_danh
         cur.execute("""
             CREATE TABLE IF NOT EXISTS diem_danh (
                 id_diem_danh INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -162,7 +178,7 @@ def ensure_db():
                 ma_sv VARCHAR(20),
                 ho_ten VARCHAR(100),
                 lop VARCHAR(20),
-                thoi_gian_vao DATETIME, -- Giá trị sẽ được cung cấp từ Python
+                thoi_gian_vao DATETIME,
                 trang_thai TEXT DEFAULT 'Có mặt',
                 do_tin_cay FLOAT,
                 thuat_toan TEXT DEFAULT 'Euclidean',
@@ -171,7 +187,12 @@ def ensure_db():
             )
         """)
         
-        # Bảng nguoi_dung - 🛠️ Giữ nguyên CURRENT_TIMESTAMP cho bảng người dùng ít quan trọng về múi giờ
+        # Migration cho diem_danh
+        add_column_if_not_exists(cur, "diem_danh", "thuat_toan", "TEXT DEFAULT 'Euclidean'")
+        add_column_if_not_exists(cur, "diem_danh", "phuong_phap_phat_hien", "TEXT DEFAULT 'OpenCV'")
+        add_column_if_not_exists(cur, "diem_danh", "do_tin_cay", "FLOAT")
+        
+        # Bảng nguoi_dung
         cur.execute("""
             CREATE TABLE IF NOT EXISTS nguoi_dung (
                 id_user INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -195,7 +216,7 @@ def ensure_db():
         """, ('admin', admin_password, 'Huỳnh Lê Anh Khoa', 'admin@school.edu.vn', 'Admin', 'Hoạt động'))
         
         conn.commit()
-        print("✅ Đã tạo/tạo lại tất cả bảng với bảng nguoi_dung mới")
+        print("✅ Đã kiểm tra và cập nhật cấu trúc Database")
 
 def hash_password(password):
     """Hash mật khẩu sử dụng SHA-256"""
@@ -216,16 +237,18 @@ ensure_db()
 # ---------- QUẢN LÝ KHUÔN MẶT VỚI ĐA THUẬT TOÁN ----------
 known_face_encodings = []
 known_face_info = []
-known_face_arcface_embeddings = []  # ArcFace embeddings
-known_face_lbph_data = []  # LBPH data
-known_face_deep_embeddings = []  # Deep Learning embeddings
-known_face_mtcnn_embeddings = []  # MTCNN embeddings
+known_face_arcface_embeddings = []
+known_face_lbph_data = []
+known_face_deep_embeddings = []
+known_face_mtcnn_embeddings = []
 
 def load_all_face_encodings():
-    """Tải tất cả encodings khuôn mặt từ thư mục uploads/encodings"""
-    global known_face_encodings, known_face_info, known_face_arcface_embeddings, known_face_lbph_data
+    """Tải tất cả encoding khuôn mặt vào bộ nhớ"""
+    global known_face_encodings, known_face_info
+    global known_face_arcface_embeddings, known_face_lbph_data
     global known_face_deep_embeddings, known_face_mtcnn_embeddings
     
+    # Reset toàn bộ
     known_face_encodings = []
     known_face_info = []
     known_face_arcface_embeddings = []
@@ -250,11 +273,11 @@ def load_all_face_encodings():
             # Lấy thông tin sinh viên từ database
             with get_conn() as conn:
                 cur = conn.cursor()
-                cur.execute("SELECT ho_ten, lop FROM sinh_vien WHERE ma_sv = ?", (ma_sv,))
+                cur.execute("SELECT id_sv, ho_ten, lop FROM sinh_vien WHERE ma_sv = ?", (ma_sv,))
                 result = cur.fetchone()
                 
                 if result:
-                    ho_ten, lop = result
+                    id_sv, ho_ten, lop = result
                     
                     # Load encodings từ file .npy
                     enc_path = os.path.join(ENC_DIR, filename)
@@ -263,14 +286,13 @@ def load_all_face_encodings():
                         encodings_data = np.load(enc_path, allow_pickle=True)
                         
                         # Xử lý dữ liệu từ file .npy
-                        if encodings_data.ndim == 0:
+                        if encodings_data.ndim == 0: # File rỗng hoặc chỉ có 1 phần tử không phải array
                             encodings = []
-                        elif encodings_data.ndim == 1:
-                            if encodings_data.shape == (128,):
-                                encodings = [encodings_data]
-                            else:
-                                encodings = list(encodings_data)
-                        else:
+                        elif encodings_data.ndim == 1 and encodings_data.dtype == object: # Array of objects
+                            encodings = list(encodings_data)
+                        elif encodings_data.ndim == 1 and encodings_data.shape == (128,): # Chỉ có 1 encoding dạng (128,)
+                            encodings = [encodings_data]
+                        else: # Array of arrays (multiple encodings)
                             encodings = list(encodings_data)
                         
                         print(f"📊 File {filename} chứa {len(encodings)} encoding(s) cho {ho_ten}")
@@ -279,16 +301,18 @@ def load_all_face_encodings():
                         for i, encoding in enumerate(encodings):
                             encoding_array = np.array(encoding, dtype=np.float32)
                             
-                            # Kiểm tra shape của encoding
+                            # Kiểm tra shape của encoding (đảm bảo là 128 chiều)
                             if encoding_array.shape == (128,):
                                 known_face_encodings.append(encoding_array)
                                 known_face_info.append({
+                                    'id_sv': id_sv, # Thêm id_sv
                                     'ma_sv': ma_sv,
                                     'ho_ten': ho_ten,
                                     'lop': lop
                                 })
                                 
-                                # Tạo ArcFace embedding
+                                # Tạo ArcFace embedding (chỉ khi có model và embedding hợp lệ)
+                                # Hiện tại, chúng ta mô phỏng, nên luôn tạo
                                 arcface_embedding = convert_to_arcface_embedding(encoding_array)
                                 known_face_arcface_embeddings.append(arcface_embedding)
                                 
@@ -314,7 +338,6 @@ def load_all_face_encodings():
                     print(f"⚠️ Không tìm thấy thông tin sinh viên cho mã: {ma_sv}")
     
     print(f"🎯 Tổng số khuôn mặt đã tải: {len(known_face_encodings)} từ {len(set([info['ma_sv'] for info in known_face_info]))} sinh viên")
-
 def convert_to_arcface_embedding(encoding):
     """Chuyển đổi encoding thường sang ArcFace embedding"""
     if len(encoding) == 128:
@@ -978,37 +1001,48 @@ def api_xoa_nguoi_dung(id_user):
 @login_required
 def api_sinh_vien():
     """Lấy danh sách sinh viên"""
-    with get_conn() as conn:
-        cur = conn.cursor()
-        cur.execute("""
-            SELECT id_sv, ma_sv, ho_ten, gioi_tinh, lop, khoa, nganh_hoc,
-                   so_dien_thoai, email, trang_thai, created_at
-            FROM sinh_vien 
-            ORDER BY created_at DESC
-        """)
-        rows = cur.fetchall()
-        
-        sinh_vien_list = []
-        for row in rows:
-            sv = dict(row)
-            # Đếm số lượng ảnh khuôn mặt
-            ma_sv = sv['ma_sv']
-            enc_path = os.path.join(ENC_DIR, f"{ma_sv}.npy")
-            if os.path.exists(enc_path):
-                try:
-                    encodings_data = np.load(enc_path, allow_pickle=True)
-                    if encodings_data.ndim == 0:
-                        sv['so_anh_khuon_mat'] = 0
-                    else:
-                        sv['so_anh_khuon_mat'] = len(encodings_data) if encodings_data.ndim > 0 else 1
-                except:
-                    sv['so_anh_khuon_mat'] = 0
-            else:
-                sv['so_anh_khuon_mat'] = 0
+    try:
+        with get_conn() as conn:
+            cur = conn.cursor()
+            # Chọn tất cả cột, dùng COALESCE để xử lý NULL cho created_at nếu cần sort trong SQL
+            cur.execute("""
+                SELECT id_sv, ma_sv, ho_ten, gioi_tinh, lop, khoa, nganh_hoc,
+                       so_dien_thoai, email, trang_thai, created_at
+                FROM sinh_vien 
+                ORDER BY id_sv DESC
+            """)
+            rows = cur.fetchall()
+            
+            sinh_vien_list = []
+            for row in rows:
+                sv = dict(row)
                 
-            sinh_vien_list.append(sv)
-        
-        return jsonify(sinh_vien_list)
+                # Xử lý an toàn cho created_at nếu là None
+                if sv.get('created_at') is None:
+                    sv['created_at'] = "" 
+                
+                # Đếm số lượng ảnh khuôn mặt
+                ma_sv = sv['ma_sv']
+                enc_path = os.path.join(ENC_DIR, f"{ma_sv}.npy")
+                if os.path.exists(enc_path):
+                    try:
+                        encodings_data = np.load(enc_path, allow_pickle=True)
+                        if encodings_data.ndim == 0:
+                            sv['so_anh_khuon_mat'] = 0
+                        else:
+                            sv['so_anh_khuon_mat'] = len(encodings_data) if encodings_data.ndim > 0 else 1
+                    except:
+                        sv['so_anh_khuon_mat'] = 0
+                else:
+                    sv['so_anh_khuon_mat'] = 0
+                    
+                sinh_vien_list.append(sv)
+            
+            return jsonify(sinh_vien_list)
+    except Exception as e:
+        print(f"❌ Lỗi API sinh viên: {e}")
+        # Trả về danh sách rỗng thay vì lỗi 500 để frontend không bị crash
+        return jsonify([])
 
 @app.route("/api/sinh-vien", methods=["POST"])
 @login_required
@@ -1069,30 +1103,21 @@ def api_them_sinh_vien():
         return jsonify({"error": "server_error", "detail": str(e)}), 500
 
 # ---------- API SỬA SINH VIÊN ----------
-@app.route("/api/sinh-vien", methods=["PUT"])
+@app.route("/api/sinh-vien/<int:id_sv>", methods=["PUT"])
 @login_required
-def api_sua_sinh_vien():
+def api_sua_sinh_vien(id_sv):
     """Sửa thông tin sinh viên"""
     try:
         data = request.get_json()
         print(f"📝 Nhận request sửa sinh viên: {data}")
         
-        if not data:
-            return jsonify({"error": "Thiếu dữ liệu"}), 400
-        
-        # Kiểm tra trường bắt buộc
-        if 'id_sv' not in data:
-            return jsonify({"error": "Thiếu id_sv"}), 400
-        
-        id_sv = data['id_sv']
-        
         with get_conn() as conn:
             cur = conn.cursor()
             
             # Kiểm tra sinh viên tồn tại
-            cur.execute("SELECT id_sv, ma_sv FROM sinh_vien WHERE id_sv = ?", (id_sv,))
-            sv = cur.fetchone()
-            if not sv:
+            cur.execute("SELECT ma_sv FROM sinh_vien WHERE id_sv = ?", (id_sv,))
+            sv_existing = cur.fetchone()
+            if not sv_existing:
                 return jsonify({"error": "Không tìm thấy sinh viên"}), 404
             
             # Chuẩn bị các trường cập nhật
@@ -1101,12 +1126,33 @@ def api_sua_sinh_vien():
             
             # Các trường có thể cập nhật
             updatable_fields = [
-                'ho_ten', 'gioi_tinh', 'lop', 'khoa', 'nganh_hoc', 
+                'ma_sv', 'ho_ten', 'gioi_tinh', 'lop', 'khoa', 'nganh_hoc', 
                 'so_dien_thoai', 'email', 'trang_thai'
             ]
             
+            # Xử lý trường `ma_sv` đặc biệt: Nếu thay đổi, kiểm tra trùng lặp và đổi tên file .npy
+            if 'ma_sv' in data and data['ma_sv'] != sv_existing['ma_sv']:
+                new_ma_sv = data['ma_sv']
+                cur.execute("SELECT id_sv FROM sinh_vien WHERE ma_sv = ?", (new_ma_sv,))
+                if cur.fetchone():
+                    return jsonify({"error": "Mã sinh viên mới đã tồn tại"}), 400
+                
+                # Đổi tên file encoding .npy
+                old_enc_path = os.path.join(ENC_DIR, f"{sv_existing['ma_sv']}.npy")
+                new_enc_path = os.path.join(ENC_DIR, f"{new_ma_sv}.npy")
+                if os.path.exists(old_enc_path):
+                    os.rename(old_enc_path, new_enc_path)
+                    print(f"🔄 Đã đổi tên file encoding từ {sv_existing['ma_sv']}.npy thành {new_ma_sv}.npy")
+                
+                # Cập nhật mã sinh viên trong bảng diem_danh
+                cur.execute("UPDATE diem_danh SET ma_sv = ? WHERE ma_sv = ?", (new_ma_sv, sv_existing['ma_sv']))
+                print(f"🔄 Đã cập nhật ma_sv trong diem_danh từ {sv_existing['ma_sv']} thành {new_ma_sv}")
+
+                update_fields.append("ma_sv = ?")
+                update_values.append(new_ma_sv)
+            
             for field in updatable_fields:
-                if field in data:
+                if field != 'ma_sv' and field in data: # Tránh cập nhật ma_sv lần nữa
                     update_fields.append(f"{field} = ?")
                     update_values.append(data[field])
             
@@ -1128,6 +1174,10 @@ def api_sua_sinh_vien():
             cur.execute(query, update_values)
             conn.commit()
             
+            # Reload encodings nếu có thay đổi ma_sv hoặc các thông tin liên quan đến nhận diện
+            if 'ma_sv' in data: # Hoặc nếu có thông tin nào khác ảnh hưởng đến encodings cần tải lại
+                load_all_face_encodings()
+
             # Lấy thông tin sinh viên sau khi cập nhật
             cur.execute("""
                 SELECT id_sv, ma_sv, ho_ten, gioi_tinh, lop, khoa, nganh_hoc,
@@ -1847,6 +1897,29 @@ def api_diem_danh_hom_nay():
     except Exception as e:
         return jsonify({"error": str(e)}), 500
 
+@app.route("/api/diem-danh/<int:id_diem_danh>", methods=["DELETE"])
+@login_required
+def api_xoa_diem_danh(id_diem_danh):
+    """Xóa bản ghi điểm danh"""
+    try:
+        with get_conn() as conn:
+            cur = conn.cursor()
+            
+            # Kiểm tra tồn tại
+            cur.execute("SELECT id_diem_danh FROM diem_danh WHERE id_diem_danh = ?", (id_diem_danh,))
+            if not cur.fetchone():
+                return jsonify({"error": "Không tìm thấy bản ghi"}), 404
+            
+            cur.execute("DELETE FROM diem_danh WHERE id_diem_danh = ?", (id_diem_danh,))
+            conn.commit()
+            
+            return jsonify({
+                "success": True,
+                "message": "Đã xóa bản ghi điểm danh"
+            })
+    except Exception as e:
+        return jsonify({"error": str(e)}), 500
+
 @app.route("/api/stats", methods=["GET"])
 @login_required
 def api_stats():
@@ -1915,12 +1988,6 @@ def student_management():
 def user_management_alias():
     """Trang quản lý người dùng (alias với underscore)"""
     return render_template('user_management.html')
-
-@app.route("/face-training")
-@login_required
-def face_training():
-    """Trang train khuôn mặt"""
-    return render_template('face_training.html')
 
 @app.route("/statistical")
 @login_required

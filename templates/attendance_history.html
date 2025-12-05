@@ -1,927 +1,209 @@
 {% extends "header.html" %}
 
-{% block title %}Lịch Sử Điểm Danh - Hệ Thống Nhận Diện Khuôn Mặt Sinh Viên DLA{% endblock %}
+{% block title %}Lịch sử điểm danh - Hệ thống DLA{% endblock %}
 
 {% block content %}
-<style>
-    /* CSS Wrapper từ trang statistical.html */
-    .main-wrapper {
-        width: 100%;
-        padding: 20px;
-        flex: 1;
-    }
-
-    /* CSS chung từ trang statistical.html */
-    .card {
-        border-radius: 10px;
-        box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
-        margin-bottom: 20px;
-        border: none;
-        background-color: #fff;
-    }
-    .card-header {
-        background-color: #4e73df;
-        color: white;
-        border-radius: 10px 10px 0 0 !important;
-        font-weight: bold;
-    }
-    
-    /* Điều chỉnh thẻ thống kê để khớp với statistical.html */
-    .stat-card {
-        text-align: center;
-        padding: 20px;
-    }
-    .stat-number {
-        font-size: 2.5rem;
-        font-weight: bold;
-        margin: 10px 0;
-    }
-    /* Sử dụng các màu từ statistical.html */
-    .primary-color { color: #4e73df; }
-    .success-color { color: #1cc88a; }
-    .warning-color { color: #f39c12; }
-    .danger-color { color: #e74c3c; }
-
-    .table-responsive {
-        border-radius: 10px;
-        overflow: hidden;
-    }
-    .table th {
-        background-color: #4e73df;
-        color: white;
-        vertical-align: middle;
-    }
-    .filter-section {
-        background-color: white;
-        padding: 15px;
-        border-radius: 10px;
-        margin-bottom: 20px;
-        box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
-    }
-    .export-options {
-        display: flex;
-        gap: 10px;
-        align-items: center;
-    }
-    
-    /* Các nút bấm từ statistical.html */
-    .export-btn { 
-        background-color: #1cc88a; 
-        border: none; 
-        color: white; 
-        padding: 8px 15px; 
-        border-radius: 5px; 
-        font-weight: bold; 
-        transition: all 0.3s; 
-    }
-    .export-btn:hover { 
-        background-color: #17a673; 
-        transform: translateY(-2px); 
-    }
-    
-    .refresh-btn { 
-        background-color: #4e73df; 
-        border: none; 
-        color: white; 
-        padding: 8px 15px; 
-        border-radius: 5px; 
-        font-weight: bold; 
-        transition: all 0.3s; 
-    }
-    .refresh-btn:hover { 
-        background-color: #2e59d9; 
-        transform: translateY(-2px); 
-    }
-    
-    .print-btn { 
-        background-color: #6c757d; 
-        border: none; 
-        color: white; 
-        padding: 8px 15px; 
-        border-radius: 5px; 
-        font-weight: bold; 
-        transition: all 0.3s; 
-    }
-    .print-btn:hover { 
-        background-color: #5a6268; 
-        transform: translateY(-2px); 
-    }
-
-   
-    .loading-spinner, .empty-state {
-        text-align: center;
-        padding: 20px;
-    }
-    .attendance-row {
-        cursor: pointer;
-    }
-
-    /* Print media query */
-    @media print {
-        .no-print { display: none !important; }
-        .card { box-shadow: none !important; border: 1px solid #ddd !important; }
-        .table th { background-color: #f8f9fa !important; color: black !important; }
-    }
-</style>
-
-<div class="main-wrapper">
-    <div class="row">
-        <div class="col-12">
-            <div class="d-flex justify-content-between align-items-center mb-4">
-                <h2 class="text-primary"><i class="fas fa-history me-2"></i> Lịch Sử Điểm Danh</h2>
-                <div class="export-options no-print">
-                    <button class="btn refresh-btn me-2" id="refresh-btn">
-                        <i class="fas fa-sync-alt me-1"></i> Làm mới
-                    </button>
-                    <button class="btn export-btn me-2" id="export-btn">
-                        <i class="fas fa-file-excel me-1"></i> Xuất Excel
-                    </button>
-                    <button class="btn print-btn" id="print-btn">
-                        <i class="fas fa-print me-1"></i> In báo cáo
-                    </button>
-                </div>
-            </div>
-        </div>
+<div class="container mx-auto px-4 py-6">
+    <div class="flex justify-between items-center mb-6">
+        <h1 class="text-2xl font-bold text-slate-800"><i class="fas fa-history mr-2 text-indigo-600"></i>Lịch sử điểm danh</h1>
+        <button onclick="window.exportToExcel()" class="px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors flex items-center gap-2 shadow-sm">
+            <i class="fas fa-file-excel"></i> Xuất Excel
+        </button>
     </div>
 
-    <div class="row">
-        <div class="col-md-3">
-            <div class="card stat-card">
-                <div class="card-body">
-                    <i class="fas fa-clipboard-list fa-2x primary-color"></i>
-                    <div class="stat-number primary-color" id="total-attendance">0</div>
-                    <div class="text-muted">Tổng lượt điểm danh</div>
+    <!-- Filter Section -->
+    <div class="bg-white p-5 rounded-2xl shadow-sm border border-slate-100 mb-6">
+        <div class="flex flex-col md:flex-row gap-4 justify-between items-end">
+            <div class="grid grid-cols-1 md:grid-cols-3 gap-4 w-full md:w-3/4">
+                <!-- Search -->
+                <div>
+                    <label class="block text-xs font-bold text-slate-500 uppercase mb-1">Tìm kiếm</label>
+                    <div class="relative">
+                        <i class="fas fa-search absolute left-3 top-1/2 -translate-y-1/2 text-slate-400"></i>
+                        <input type="text" id="searchInput" onkeyup="filterAndRender()" placeholder="Tên hoặc Mã SV..." class="w-full pl-9 pr-4 py-2 bg-slate-50 border border-slate-200 rounded-lg text-sm focus:ring-2 focus:ring-indigo-500 outline-none transition-all">
+                    </div>
                 </div>
-            </div>
-        </div>
-        <div class="col-md-3">
-            <div class="card stat-card">
-                <div class="card-body">
-                    <i class="fas fa-user-check fa-2x success-color"></i>
-                    <div class="stat-number success-color" id="today-attendance">0</div>
-                    <div class="text-muted">Điểm danh hôm nay</div>
-                </div>
-            </div>
-        </div>
-        <div class="col-md-3">
-            <div class="card stat-card">
-                <div class="card-body">
-                    <i class="fas fa-users fa-2x primary-color"></i>
-                    <div class="stat-number primary-color" id="unique-students">0</div>
-                    <div class="text-muted">Sinh viên duy nhất</div>
-                </div>
-            </div>
-        </div>
-        <div class="col-md-3">
-            <div class="card stat-card">
-                <div class="card-body">
-                    <i class="fas fa-shield-alt fa-2x warning-color"></i>
-                    <div class="stat-number warning-color" id="avg-confidence">0%</div>
-                    <div class="label text-muted">Độ tin cậy TB</div>
-                </div>
-            </div>
-        </div>
-    </div>
 
-    <div class="filter-section no-print">
-        <div class="row">
-            <div class="col-md-3">
-                <label for="date-filter" class="form-label">Ngày điểm danh</label>
-                <input type="text" class="form-control datepicker" id="date-filter" placeholder="Chọn ngày">
+                <!-- Class/Subject Filter -->
+                <div>
+                    <label class="block text-xs font-bold text-slate-500 uppercase mb-1">Lớp / Môn học</label>
+                    <select id="classFilter" onchange="filterAndRender()" class="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-lg text-sm focus:ring-2 focus:ring-indigo-500 outline-none cursor-pointer">
+                        <option value="">-- Tất cả --</option>
+                    </select>
+                </div>
+
+                <!-- Confidence Filter -->
+                <div>
+                    <label class="block text-xs font-bold text-slate-500 uppercase mb-1">Độ chính xác</label>
+                    <select id="confFilter" onchange="filterAndRender()" class="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-lg text-sm focus:ring-2 focus:ring-indigo-500 outline-none cursor-pointer">
+                        <option value="">Tất cả</option>
+                        <option value="high">Cao (>80%)</option>
+                        <option value="medium">Trung bình (60-80%)</option>
+                        <option value="low">Thấp (<60%)</option>
+                    </select>
+                </div>
             </div>
-            <div class="col-md-3">
-                <label for="class-filter" class="form-label">Lớp</label>
-                <select class="form-select" id="class-filter">
-                    <option value="">Tất cả lớp</option>
-                </select>
-            </div>
-            <div class="col-md-3">
-                <label for="algorithm-filter" class="form-label">Thuật toán</label>
-                <select class="form-select" id="algorithm-filter">
-                    <option value="">Tất cả thuật toán</option>
-                    <option value="Euclidean">Euclidean</option>
-                    <option value="ArcFace">ArcFace</option>
-                    <option value="DeepLearning">Deep Learning</option>
-                    <option value="MTCNN">MTCNN</option>
-                    <option value="LBPH">LBPH</option>
-                </select>
-            </div>
-            <div class="col-md-3">
-                <label for="detection-filter" class="form-label">Phương pháp phát hiện</label>
-                <select class="form-select" id="detection-filter">
-                    <option value="">Tất cả phương pháp</option>
-                    <option value="OpenCV_Haar">OpenCV Haar</option>
-                    <option value="Dlib_HOG">Dlib HOG</option>
-                    <option value="MTCNN">MTCNN</option>
-                    <option value="OpenCV">OpenCV</option>
-                </select>
-            </div>
-        </div>
-        <div class="row mt-3">
-            <div class="col-md-6">
-                <label for="student-filter" class="form-label">Tìm kiếm sinh viên</label>
-                <input type="text" class="form-control" id="student-filter" placeholder="Nhập mã SV hoặc tên sinh viên">
-            </div>
-            <div class="col-md-3">
-                <label for="confidence-filter" class="form-label">Độ tin cậy tối thiểu: <span id="confidence-value">60%</span></label>
-                <input type="range" class="form-range" id="confidence-filter" min="0" max="100" value="60">
-            </div>
-            <div class="col-md-3 d-flex align-items-end">
-                <button class="btn btn-primary w-100" id="apply-filters">
-                    <i class="fas fa-filter me-1"></i> Áp dụng bộ lọc
+
+            <!-- Refresh Button (Redesigned) -->
+            <div class="w-full md:w-auto flex justify-end">
+                 <button onclick="window.loadHistory()" class="group flex items-center justify-center gap-2 px-5 py-2.5 bg-white border border-slate-200 text-slate-600 rounded-lg hover:bg-indigo-50 hover:text-indigo-600 hover:border-indigo-200 transition-all shadow-sm font-medium text-sm">
+                    <i class="fas fa-sync-alt group-hover:animate-spin"></i>
+                    <span>Làm mới dữ liệu</span>
                 </button>
             </div>
         </div>
     </div>
 
-    <div class="row mt-4 mb-5">
-        <div class="col-12">
-            <div class="card">
-                <div class="card-header d-flex justify-content-between align-items-center">
-                    <span><i class="fas fa-table me-1"></i> Danh sách lịch sử điểm danh</span>
-                    <div class="form-check form-switch">
-                        <input class="form-check-input" type="checkbox" id="auto-refresh">
-                        <label class="form-check-label text-white" for="auto-refresh">Tự động làm mới</label>
-                    </div>
-                </div>
-                <div class="card-body">
-                    <div class="loading-spinner" id="loading-spinner">
-                        <div class="spinner-border text-primary" role="status">
-                            <span class="visually-hidden">Đang tải...</span>
-                        </div>
-                        <p class="mt-2">Đang tải dữ liệu điểm danh...</p>
-                    </div>
-                    
-                    <div class="table-responsive">
-                        <table class="table table-striped table-hover" id="attendance-table">
-                            <thead>
-                                <tr>
-                                    <th>Mã SV</th>
-                                    <th>Họ tên</th>
-                                    <th>Lớp</th>
-                                    <th>Thời gian</th>
-                                    <th>Độ tin cậy</th>
-                                    <th>Thuật toán</th>
-                                    <th>Phát hiện</th>
-                                    <th>Trạng thái</th>
-                                </tr>
-                            </thead>
-                            <tbody id="attendance-tbody">
-                                </tbody>
-                        </table>
-                    </div>
-                    
-                    <div class="empty-state" id="empty-state" style="display: none;">
-                        <i class="fas fa-inbox"></i>
-                        <h4>Không có dữ liệu điểm danh</h4>
-                        <p>Chưa có bản ghi điểm danh nào phù hợp với bộ lọc của bạn.</p>
-                    </div>
-                </div>
-            </div>
+    <div class="bg-white rounded-xl shadow-sm border border-slate-100 overflow-hidden">
+        <div class="overflow-x-auto">
+            <table class="w-full text-left border-collapse">
+                <thead class="bg-slate-50 text-slate-500 font-semibold text-sm uppercase tracking-wider">
+                    <tr>
+                        <th class="px-6 py-4 w-16 text-center">STT</th>
+                        <th class="px-6 py-4">Mã SV</th>
+                        <th class="px-6 py-4">Họ tên</th>
+                        <th class="px-6 py-4">Lớp</th>
+                        <th class="px-6 py-4">Thời gian vào</th>
+                        <th class="px-6 py-4">Độ tin cậy</th>
+                        <th class="px-6 py-4">Trạng thái</th>
+                        <th class="px-6 py-4 text-center">Hành động</th>
+                    </tr>
+                </thead>
+                <tbody id="historyTableBody" class="divide-y divide-slate-100 text-slate-600 text-sm"></tbody>
+            </table>
+        </div>
+        <div class="p-4 border-t border-slate-100 flex justify-between items-center" id="paginationControls">
+            <span class="text-slate-500 text-sm">Hiển thị <span id="showingCount">0</span> kết quả</span>
         </div>
     </div>
 </div>
-
-<div class="modal fade" id="detailModal" tabindex="-1">
-    <div class="modal-dialog modal-lg">
-        <div class="modal-content">
-            <div class="modal-header">
-                <h5 class="modal-title">Chi tiết điểm danh</h5>
-                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
-            </div>
-            <div class="modal-body" id="detail-modal-body">
-                </div>
-            <div class="modal-footer">
-                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Đóng</button>
-            </div>
-        </div>
-    </div>
-</div>
-
-<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0-alpha1/dist/js/bootstrap.bundle.min.js"></script>
-<script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
-<script src="https://cdnjs.cloudflare.com/ajax/libs/bootstrap-datepicker/1.9.0/js/bootstrap-datepicker.min.js"></script>
-<script src="https://cdnjs.cloudflare.com/ajax/libs/bootstrap-datepicker/1.9.0/locales/bootstrap-datepicker.vi.min.js"></script>
-<script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
 
 <script>
-    // Biến toàn cục
-    let allAttendanceData = [];
-    let filteredData = [];
-    let autoRefreshInterval = null;
+    var allHistory = [];
 
-    // Khởi tạo trang
-    $(document).ready(function() {
-        // Khởi tạo datepicker
-        $('.datepicker').datepicker({
-            format: 'yyyy-mm-dd',
-            language: 'vi',
-            autoclose: true,
-            todayHighlight: true
-        });
-        
-        // Tải dữ liệu điểm danh
-        loadAttendanceData();
-        
-        // Thiết lập sự kiện
-        setupEventListeners();
-    });
-
-    // Thiết lập các sự kiện
-    function setupEventListeners() {
-        // Nút làm mới
-        $('#refresh-btn').click(function() {
-            loadAttendanceData();
-        });
-        
-        // Áp dụng bộ lọc
-        $('#apply-filters').click(function() {
-            applyFilters();
-        });
-        
-        // Nút in
-        $('#print-btn').click(() => window.print());
-        
-        // Tự động làm mới
-        $('#auto-refresh').change(function() {
-            if ($(this).is(':checked')) {
-                startAutoRefresh();
-            } else {
-                stopAutoRefresh();
-            }
-        });
-        
-        // Xuất Excel
-        $('#export-btn').click(function() {
-            exportToExcel();
-        });
-        
-        // Hiển thị giá trị độ tin cậy
-        $('#confidence-filter').on('input', function() {
-            $('#confidence-value').text($(this).val() + '%');
-        });
-        
-        // Nhấn Enter trong ô tìm kiếm
-        $('#student-filter').keypress(function(e) {
-            if (e.which === 13) {
-                applyFilters();
-            }
-        });
-
-        // Thay đổi ngày điểm danh
-        $('#date-filter').on('change', function() {
-             // Tải lại dữ liệu (API thường cần tham số ngày)
-             // Tạm thời chỉ áp dụng bộ lọc nếu đang dùng mock data
-             if (allAttendanceData.length > 0 && allAttendanceData[0].id_diem_danh) {
-                applyFilters(); 
-             } else {
-                loadAttendanceData();
-             }
-        });
-    }
-
-    // Tải dữ liệu điểm danh từ API thật
-    function loadAttendanceData() {
-        showLoading(true);
-        
-        // Lấy ngày đã chọn từ datepicker
-        const selectedDate = $('#date-filter').val();
-        let apiUrl = '/api/diem-danh';
-
-        if (selectedDate) {
-            // API call có thể cần thêm tham số ngày
-            apiUrl = `/api/diem-danh?date=${selectedDate}`;
-        }
-        
-        $.ajax({
-            url: apiUrl,
-            method: 'GET',
-            headers: {
-                'Content-Type': 'application/json'
-            },
-            success: function(response) {
-                console.log('Dữ liệu điểm danh nhận được:', response);
-                allAttendanceData = Array.isArray(response) ? response : [];
-                
-                // Nếu API trả về ít/không có dữ liệu, dùng mock data để demo tính năng lọc/hiển thị
-                if (allAttendanceData.length < 10) {
-                     // Chỉ thêm mock data nếu API không hoạt động hoặc không trả về đủ dữ liệu
-                     if (allAttendanceData.length === 0 || allAttendanceData[0].ma_sv === undefined) {
-                        allAttendanceData = generateMockData();
-                        showError('Sử dụng dữ liệu mẫu do không tải được dữ liệu API hoặc dữ liệu trống.');
-                     }
-                }
-                
-                applyFilters();
-                updateStats();
-                showLoading(false);
-            },
-            error: function(xhr, status, error) {
-                console.error('Lỗi khi tải dữ liệu điểm danh:', error);
-                
-                if (xhr.status === 401) {
-                    window.location.href = '/login';
-                    return;
-                }
-                
-                showError('Không thể tải dữ liệu điểm danh: ' + (xhr.responseJSON?.message || error));
-                
-                // Luôn tạo dữ liệu mẫu nếu API lỗi hoàn toàn
-                if (allAttendanceData.length === 0) {
-                    allAttendanceData = generateMockData();
-                    applyFilters();
-                    updateStats();
-                }
-                showLoading(false);
-            }
-        });
-    }
-
-    // Tải dữ liệu điểm danh hôm nay cho thống kê (sử dụng API call riêng nếu có)
-    function loadTodayAttendance() {
-        return new Promise((resolve) => {
-             // Mô phỏng API call cho điểm danh hôm nay nếu không có
-             const today = new Date().toISOString().split('T')[0];
-             const todayData = allAttendanceData.filter(item => 
-                 item.thoi_gian_vao && item.thoi_gian_vao.split(' ')[0] === today
-             );
-
-             resolve({ 
-                 count: todayData.length, 
-                 uniqueStudents: new Set(todayData.map(item => item.ma_sv)).size
-             });
-        });
-    }
-
-    // Tạo dữ liệu mẫu cho demo (dùng khi API lỗi)
-    function generateMockData() {
-        const mockData = [];
-        const classes = ['DH21DTA', 'DH21DTB', 'DH21DTC', 'DH21DTD'];
-        const algorithms = ['Euclidean', 'ArcFace', 'DeepLearning', 'MTCNN', 'LBPH'];
-        const detectionMethods = ['OpenCV_Haar', 'Dlib_HOG', 'MTCNN', 'OpenCV'];
-        const students = [
-            { id: 'DH52100123', name: 'Nguyễn Văn A' },
-            { id: 'DH52100124', name: 'Trần Thị B' },
-            { id: 'DH52100125', name: 'Lê Văn C' },
-            { id: 'DH52100126', name: 'Phạm Thị D' },
-            { id: 'DH52100127', name: 'Hoàng Văn E' },
-            { id: 'DH52100128', name: 'Vũ Thị F' },
-            { id: 'DH52100129', name: 'Đặng Văn G' },
-            { id: 'DH52100130', name: 'Bùi Thị H' },
-        ];
-
-        // Tạo dữ liệu cho 7 ngày gần đây
-        for (let i = 0; i < 50; i++) {
-            const student = students[Math.floor(Math.random() * students.length)];
-            const daysAgo = Math.floor(Math.random() * 7);
-            const date = new Date();
-            date.setDate(date.getDate() - daysAgo);
-            
-            const hours = Math.floor(Math.random() * 8) + 7; // 7h-15h
-            const minutes = Math.floor(Math.random() * 60);
-            
-            mockData.push({
-                id_diem_danh: i + 1,
-                ma_sv: student.id,
-                ho_ten: student.name,
-                lop: classes[Math.floor(Math.random() * classes.length)],
-                thoi_gian_vao: `${date.toISOString().split('T')[0]} ${hours.toString().padStart(2, '0')}:${minutes.toString().padStart(2, '0')}:00`,
-                do_tin_cay: Math.floor(Math.random() * 40) + 60, // 60-100%
-                thuat_toan: algorithms[Math.floor(Math.random() * algorithms.length)],
-                phuong_phap_phat_hien: detectionMethods[Math.floor(Math.random() * detectionMethods.length)],
-                trang_thai: 'Có mặt'
-            });
-        }
-        
-        // Sắp xếp theo thời gian mới nhất
-        return mockData.sort((a, b) => new Date(b.thoi_gian_vao) - new Date(a.thoi_gian_vao));
-    }
-
-    // Áp dụng bộ lọc
-    function applyFilters() {
-        const dateFilter = $('#date-filter').val();
-        const classFilter = $('#class-filter').val();
-        const algorithmFilter = $('#algorithm-filter').val();
-        const detectionFilter = $('#detection-filter').val();
-        const studentFilter = $('#student-filter').val().toLowerCase();
-        const confidenceFilter = parseInt($('#confidence-filter').val());
-        
-        filteredData = allAttendanceData.filter(item => {
-            // Lọc theo ngày
-            if (dateFilter) {
-                const itemDate = item.thoi_gian_vao ? item.thoi_gian_vao.split(' ')[0] : '';
-                if (itemDate !== dateFilter) return false;
-            }
-            
-            // Lọc theo lớp
-            if (classFilter && item.lop !== classFilter) return false;
-            
-            // Lọc theo thuật toán
-            if (algorithmFilter && item.thuat_toan !== algorithmFilter) return false;
-            
-            // Lọc theo phương pháp phát hiện
-            if (detectionFilter && item.phuong_phap_phat_hien !== detectionFilter) return false;
-            
-            // Lọc theo sinh viên
-            if (studentFilter) {
-                const studentMatch = (item.ma_sv && item.ma_sv.toLowerCase().includes(studentFilter)) || 
-                                     (item.ho_ten && item.ho_ten.toLowerCase().includes(studentFilter));
-                if (!studentMatch) return false;
-            }
-            
-            // Lọc theo độ tin cậy
-            const confidence = item.do_tin_cay || 0;
-            if (confidence < confidenceFilter) return false;
-            
-            return true;
-        });
-        
-        // Cập nhật danh sách lớp
-        updateClassFilter();
-        
-        // Hiển thị dữ liệu đã lọc
-        displayAttendanceData();
-        updateStats();
-    }
-
-    // Cập nhật bộ lọc lớp
-    function updateClassFilter() {
-        // Chỉ lấy lớp từ toàn bộ dữ liệu (allAttendanceData) để đảm bảo danh sách lớp đầy đủ, không bị thiếu khi lọc
-        const classes = [...new Set(allAttendanceData.map(item => item.lop).filter(Boolean))].sort();
-        const classFilter = $('#class-filter');
-        
-        // Lưu giá trị hiện tại
-        const currentValue = classFilter.val();
-        
-        // Xóa các option cũ (trừ option đầu tiên)
-        classFilter.find('option:not(:first)').remove();
-        
-        // Thêm các lớp mới
-        classes.forEach(className => {
-            classFilter.append(`<option value="${className}">${className}</option>`);
-        });
-        
-        // Khôi phục giá trị đã chọn nếu vẫn tồn tại
-        if (classes.includes(currentValue)) {
-            classFilter.val(currentValue);
-        } else {
-            classFilter.val(''); // Đặt lại nếu lớp đã chọn không còn tồn tại trong bộ dữ liệu mới
+    window.initializeAttendanceHistory = function() {
+        // Gọi hàm thông qua window để đảm bảo tìm thấy
+        if (typeof window.loadHistory === 'function') {
+            window.loadHistory();
         }
     }
 
-    // Hiển thị dữ liệu điểm danh
-    function displayAttendanceData() {
-        const tbody = $('#attendance-tbody');
-        tbody.empty();
-        
-        if (filteredData.length === 0) {
-            $('#empty-state').show();
-            $('#attendance-table').hide();
-            return;
-        }
-        
-        $('#empty-state').hide();
-        $('#attendance-table').show();
-        
-        // Hiển thị dữ liệu
-        filteredData.forEach(item => {
-            const row = createAttendanceRow(item);
-            tbody.append(row);
-        });
-        
-        // Thêm sự kiện click cho từng hàng
-        $('.attendance-row').click(function() {
-            const id = $(this).data('id');
-            // Lấy item từ allAttendanceData vì id_diem_danh là duy nhất
-            const detailItem = allAttendanceData.find(d => d.id_diem_danh === id);
-            if (detailItem) {
-                 showDetailModal(detailItem);
-            }
+    if (document.readyState === 'complete' || document.readyState === 'interactive') {
+        if(document.getElementById('historyTableBody')) window.initializeAttendanceHistory();
+    } else {
+        document.addEventListener('DOMContentLoaded', () => {
+            if(document.getElementById('historyTableBody')) window.initializeAttendanceHistory();
         });
     }
 
-    // Tạo hàng dữ liệu điểm danh
-    function createAttendanceRow(item) {
-        const confidence = item.do_tin_cay || 0;
-        const confidenceClass = confidence >= 80 ? 'high-confidence' : 
-                                confidence >= 60 ? 'medium-confidence' : 'low-confidence';
-        
-        const algorithmBadgeClass = getAlgorithmBadgeClass(item.thuat_toan);
-        const detectionBadgeClass = getDetectionBadgeClass(item.phuong_phap_phat_hien);
-        const formattedTime = item.thoi_gian_vao ? formatDateTime(item.thoi_gian_vao) : 'N/A';
-        
-        return `
-            <tr class="attendance-row" data-id="${item.id_diem_danh || ''}">
-                <td><strong>${item.ma_sv || 'N/A'}</strong></td>
-                <td>${item.ho_ten || 'N/A'}</td>
-                <td>${item.lop || 'N/A'}</td>
-                <td><span class="attendance-time">${formattedTime}</span></td>
-                <td>
-                    <div class="d-flex align-items-center">
-                        <span class="me-2">${confidence.toFixed(1)}%</span>
-                        <div class="confidence-bar flex-grow-1">
-                            <div class="confidence-fill ${confidenceClass}" style="width: ${confidence}%"></div>
-                        </div>
-                    </div>
-                </td>
-                <td>
-                    <span class="badge ${algorithmBadgeClass} algorithm-badge">${item.thuat_toan || 'N/A'}</span>
-                </td>
-                <td>
-                    <span class="badge ${detectionBadgeClass} detection-badge">${item.phuong_phap_phat_hien || 'N/A'}</span>
-                </td>
-                <td>
-                    <span class="badge bg-success">${item.trang_thai || 'Có mặt'}</span>
-                </td>
-            </tr>
-        `;
-    }
-
-    // Cập nhật thống kê
-    async function updateStats() {
-        // Tổng lượt điểm danh
-        $('#total-attendance').text(allAttendanceData.length);
-        
-        // Đếm điểm danh hôm nay
-        const todayStats = await loadTodayAttendance();
-        $('#today-attendance').text(todayStats.count);
-        
-        // Đếm sinh viên duy nhất
-        const uniqueStudents = [...new Set(allAttendanceData.map(item => item.ma_sv).filter(Boolean))].length;
-        $('#unique-students').text(uniqueStudents);
-        
-        // Tính độ tin cậy trung bình
-        const validConfidences = allAttendanceData.map(item => item.do_tin_cay).filter(c => c != null);
-        const avgConfidence = validConfidences.length > 0 ? 
-            validConfidences.reduce((sum, c) => sum + c, 0) / validConfidences.length : 0;
-        $('#avg-confidence').text(avgConfidence.toFixed(1) + '%');
-    }
-
-    // Hiển thị modal chi tiết
-    function showDetailModal(item) {
-        if (!item) return;
-        
-        const modalBody = $('#detail-modal-body');
-        modalBody.html(`
-            <div class="row">
-                <div class="col-md-6">
-                    <h6><i class="fas fa-user-tag me-1 text-primary"></i> Thông tin sinh viên</h6>
-                    <table class="table table-sm table-borderless">
-                        <tr>
-                            <td><strong>Mã SV:</strong></td>
-                            <td>${item.ma_sv || 'N/A'}</td>
-                        </tr>
-                        <tr>
-                            <td><strong>Họ tên:</strong></td>
-                            <td>${item.ho_ten || 'N/A'}</td>
-                        </tr>
-                        <tr>
-                            <td><strong>Lớp:</strong></td>
-                            <td>${item.lop || 'N/A'}</td>
-                        </tr>
-                    </table>
-                </div>
-                <div class="col-md-6">
-                    <h6><i class="fas fa-clock me-1 text-success"></i> Thông tin điểm danh</h6>
-                    <table class="table table-sm table-borderless">
-                        <tr>
-                            <td><strong>Thời gian:</strong></td>
-                            <td><span class="attendance-time">${formatDateTime(item.thoi_gian_vao)}</span></td>
-                        </tr>
-                        <tr>
-                            <td><strong>Trạng thái:</strong></td>
-                            <td><span class="badge bg-success">${item.trang_thai || 'Có mặt'}</span></td>
-                        </tr>
-                        <tr>
-                            <td><strong>Độ tin cậy:</strong></td>
-                            <td><span class="badge bg-warning text-dark">${(item.do_tin_cay || 0).toFixed(1)}%</span></td>
-                        </tr>
-                    </table>
-                </div>
-            </div>
-            <hr>
-            <div class="row mt-3">
-                <div class="col-md-6">
-                    <h6><i class="fas fa-cogs me-1 text-info"></i> Thông tin thuật toán</h6>
-                    <table class="table table-sm table-borderless">
-                        <tr>
-                            <td><strong>Thuật toán:</strong></td>
-                            <td><span class="badge ${getAlgorithmBadgeClass(item.thuat_toan)}">${item.thuat_toan || 'N/A'}</span></td>
-                        </tr>
-                        <tr>
-                            <td><strong>Mô tả:</strong></td>
-                            <td>${getAlgorithmDescription(item.thuat_toan)}</td>
-                        </tr>
-                    </table>
-                </div>
-                <div class="col-md-6">
-                    <h6><i class="fas fa-search me-1 text-danger"></i> Thông tin phát hiện</h6>
-                    <table class="table table-sm table-borderless">
-                        <tr>
-                            <td><strong>Phương pháp:</strong></td>
-                            <td><span class="badge ${getDetectionBadgeClass(item.phuong_phap_phat_hien)}">${item.phuong_phap_phat_hien || 'N/A'}</span></td>
-                        </tr>
-                        <tr>
-                            <td><strong>Mô tả:</strong></td>
-                            <td>${getDetectionDescription(item.phuong_phap_phat_hien)}</td>
-                        </tr>
-                    </table>
-                </div>
-            </div>
-            <div class="row mt-3">
-                <div class="col-12">
-                    <div class="alert alert-info">
-                        <i class="fas fa-info-circle me-2"></i>
-                        Thông tin điểm danh này được ghi nhận tự động bởi hệ thống nhận diện khuôn mặt.
-                    </div>
-                </div>
-            </div>
-        `);
-        
-        // Sử dụng Bootstrap 5 Modal API
-        const detailModal = new bootstrap.Modal(document.getElementById('detailModal'));
-        detailModal.show();
-    }
-
-    // Định dạng ngày giờ
-    function formatDateTime(dateTimeStr) {
-        if (!dateTimeStr) return 'N/A';
+    window.loadHistory = async function() {
+        const tbody = document.getElementById('historyTableBody');
+        if(!tbody) return;
+        tbody.innerHTML = '<tr><td colspan="8" class="text-center py-8"><i class="fas fa-spinner fa-spin text-indigo-500 mr-2"></i>Đang tải dữ liệu...</td></tr>';
         
         try {
-            // Xử lý chuỗi 'YYYY-MM-DD HH:MM:SS' để đảm bảo nó được coi là giờ địa phương
-            let date;
-            if (dateTimeStr.match(/^\d{4}-\d{2}-\d{2} \d{2}:\d{2}:\d{2}$/)) {
-                // Tạo ngày theo giờ địa phương
-                 const parts = dateTimeStr.split(/[- :]/);
-                 // Giảm tháng đi 1 vì JS month index bắt đầu từ 0
-                 date = new Date(parts[0], parts[1] - 1, parts[2], parts[3], parts[4], parts[5]);
-            } else {
-                 date = new Date(dateTimeStr);
-            }
+            const res = await fetch('/api/diem-danh'); 
+            if(!res.ok) throw new Error('Failed');
+            allHistory = await res.json();
             
-            if (isNaN(date.getTime())) {
-                return dateTimeStr;
+            // Populate Class Filter
+            const classes = [...new Set(allHistory.map(x => x.lop).filter(Boolean))].sort();
+            const sel = document.getElementById('classFilter');
+            if(sel) {
+                const currentVal = sel.value;
+                sel.innerHTML = '<option value="">-- Tất cả --</option>';
+                classes.forEach(c => sel.add(new Option(c, c)));
+                if (classes.includes(currentVal)) sel.value = currentVal;
             }
+
+            filterAndRender();
+        } catch(err) {
+            tbody.innerHTML = '<tr><td colspan="8" class="text-center py-8 text-red-500">Lỗi tải dữ liệu: ' + err.message + '</td></tr>';
+        }
+    }
+    
+    function filterAndRender() {
+        const search = document.getElementById('searchInput').value.toLowerCase();
+        const cls = document.getElementById('classFilter').value;
+        const confFilter = document.getElementById('confFilter').value;
+        
+        const filtered = allHistory.filter(item => {
+            // Filter by Search
+            const matchSearch = !search || item.ho_ten.toLowerCase().includes(search) || item.ma_sv.toLowerCase().includes(search);
             
-            // Lấy múi giờ hiện tại để hiển thị
-            const timeZone = Intl.DateTimeFormat().resolvedOptions().timeZone;
+            // Filter by Class
+            const matchClass = !cls || item.lop === cls;
+            
+            // Filter by Confidence
+            let matchConf = true;
+            const conf = parseFloat(item.do_tin_cay || 0);
+            if (confFilter === 'high') matchConf = conf >= 80;
+            else if (confFilter === 'medium') matchConf = conf >= 60 && conf < 80;
+            else if (confFilter === 'low') matchConf = conf < 60;
 
-            return date.toLocaleDateString('vi-VN', {
-                year: 'numeric',
-                month: '2-digit',
-                day: '2-digit',
-            }) + ' ' + date.toLocaleTimeString('vi-VN', {
-                hour: '2-digit',
-                minute: '2-digit',
-                second: '2-digit',
-                timeZone: timeZone
-            });
-
-        } catch (e) {
-            return dateTimeStr;
-        }
+            return matchSearch && matchClass && matchConf;
+        });
+        renderTable(filtered);
     }
-
-    // Lấy lớp badge cho thuật toán
-    function getAlgorithmBadgeClass(algorithm) {
-        if (!algorithm) return 'bg-light text-dark';
+    
+    function renderTable(data) {
+        const tbody = document.getElementById('historyTableBody');
+        if(!tbody) return;
+        tbody.innerHTML = '';
+        const countEl = document.getElementById('showingCount');
+        if(countEl) countEl.textContent = data.length;
         
-        switch(algorithm.toLowerCase()) {
-            case 'arcface': return 'bg-primary';
-            case 'deeplearning': return 'bg-info';
-            case 'mtcnn': return 'bg-purple';
-            case 'euclidean': return 'bg-secondary';
-            case 'lbph': return 'bg-dark-blue';
-            default: return 'bg-light text-dark';
-        }
-    }
-
-    // Lấy mô tả thuật toán
-    function getAlgorithmDescription(algorithm) {
-        if (!algorithm) return 'Không có thông tin';
-        
-        const descriptions = {
-            'ArcFace': 'Additive Angular Margin Loss cho face recognition với độ chính xác cao',
-            'DeepLearning': 'Mạng nơ-ron sâu (CNN) hoặc các mô hình học sâu khác cho nhận diện khuôn mặt',
-            'MTCNN': 'Multi-task Cascaded Convolutional Network: Sử dụng cho cả face detection và alignment',
-            'Euclidean': 'Sử dụng khoảng cách Euclidean (khoảng cách giữa 2 điểm) để so sánh các face embeddings',
-            'LBPH': 'Local Binary Patterns Histograms: Thuật toán nhận diện khuôn mặt truyền thống, tập trung vào texture'
-        };
-        
-        return descriptions[algorithm] || 'Thuật toán nhận diện khuôn mặt';
-    }
-
-    // Lấy lớp badge cho phương pháp phát hiện
-    function getDetectionBadgeClass(detectionMethod) {
-        if (!detectionMethod) return 'bg-light text-dark';
-        
-        switch(detectionMethod.toLowerCase()) {
-            case 'opencv_haar': 
-            case 'opencv': return 'bg-warning text-dark';
-            case 'dlib_hog': return 'bg-success';
-            case 'mtcnn': return 'bg-danger';
-            default: return 'bg-light text-dark';
-        }
-    }
-
-    // Lấy mô tả phương pháp phát hiện
-    function getDetectionDescription(detectionMethod) {
-        if (!detectionMethod) return 'Không có thông tin';
-        
-        const descriptions = {
-            'OpenCV_Haar': 'Sử dụng Haar cascade classifier của OpenCV để phát hiện khuôn mặt',
-            'OpenCV': 'Phương pháp phát hiện khuôn mặt chung của thư viện OpenCV',
-            'Dlib_HOG': 'Sử dụng Histogram of Oriented Gradients (HOG) cho phát hiện khuôn mặt',
-            'MTCNN': 'Multi-task Cascaded CNN: Phát hiện khuôn mặt với độ chính xác rất cao, thường dùng cho Face Alignment'
-        };
-        
-        return descriptions[detectionMethod] || 'Phương pháp phát hiện khuôn mặt';
-    }
-
-    // Hiển thị/ẩn loading
-    function showLoading(show) {
-        if (show) {
-            $('#loading-spinner').show();
-            $('#attendance-table').hide();
-            $('#empty-state').hide();
-        } else {
-            $('#loading-spinner').hide();
-        }
-    }
-
-    // Hiển thị lỗi
-    function showError(message) {
-        const alertDiv = $('<div class="alert alert-danger alert-dismissible fade show" role="alert">' +
-            '<strong>Lỗi!</strong> ' + message +
-            '<button type="button" class="btn-close" data-bs-dismiss="alert"></button>' +
-            '</div>');
-        
-        $('.main-wrapper').prepend(alertDiv);
-        
-        setTimeout(() => {
-            alertDiv.alert('close');
-        }, 5000);
-    }
-
-    // Bắt đầu tự động làm mới
-    function startAutoRefresh() {
-        if (autoRefreshInterval) clearInterval(autoRefreshInterval);
-        autoRefreshInterval = setInterval(() => {
-            loadAttendanceData();
-        }, 30000); // 30 giây
-        
-        showNotification('Đã bật chế độ tự động làm mới (30 giây/lần)');
-    }
-
-    // Dừng tự động làm mới
-    function stopAutoRefresh() {
-        if (autoRefreshInterval) {
-            clearInterval(autoRefreshInterval);
-            autoRefreshInterval = null;
-            showNotification('Đã tắt chế độ tự động làm mới');
-        }
-    }
-
-    // Hiển thị thông báo
-    function showNotification(message) {
-        // Sử dụng Toast hoặc Alert nhỏ gọn
-        const notification = $('<div class="alert alert-info alert-dismissible fade show position-fixed" style="top: 20px; right: 20px; z-index: 1050; width: 300px;">' +
-            '<i class="fas fa-info-circle me-2"></i>' + message +
-            '<button type="button" class="btn-close" data-bs-dismiss="alert"></button>' +
-            '</div>');
-        
-        $('body').append(notification);
-        
-        setTimeout(() => {
-            notification.alert('close');
-        }, 3000);
-    }
-
-    // Xuất Excel
-    function exportToExcel() {
-        if (filteredData.length === 0) {
-            showError('Không có dữ liệu để xuất!');
+        if (data.length === 0) {
+            tbody.innerHTML = '<tr><td colspan="8" class="text-center py-8 text-slate-400 flex-col"><i class="far fa-folder-open text-4xl mb-2 opacity-20"></i><br>Không có dữ liệu phù hợp</td></tr>';
             return;
         }
-        
-        const wsData = filteredData.map((s, i) => ({
-            'STT': i + 1,
-            'Mã SV': s.ma_sv || '',
-            'Họ tên': s.ho_ten || '',
-            'Lớp': s.lop || '',
-            'Thời gian': formatDateTime(s.thoi_gian_vao),
-            'Độ tin cậy (%)': (s.do_tin_cay || 0).toFixed(1),
-            'Thuật toán': s.thuat_toan || '',
-            'Phát hiện': s.phuong_phap_phat_hien || '',
-            'Trạng thái': s.trang_thai || 'Có mặt'
-        }));
-
-        const ws = XLSX.utils.json_to_sheet(wsData);
-        const wb = XLSX.utils.book_new();
-        XLSX.utils.book_append_sheet(wb, ws, "LichSuDiemDanh");
-        XLSX.writeFile(wb, `LichSu_DiemDanh_${new Date().toISOString().split('T')[0]}.xlsx`);
-
-        showNotification('Đã xuất file Excel thành công!');
+        data.forEach((item, idx) => {
+            const tr = document.createElement('tr');
+            tr.className = 'hover:bg-slate-50 transition-colors border-b border-slate-50 last:border-0';
+            
+            const conf = parseFloat(item.do_tin_cay || 0);
+            let badge = '';
+            if (conf >= 80) badge = '<span class="px-2.5 py-0.5 rounded-full bg-green-100 text-green-700 text-xs font-bold border border-green-200">Cao</span>';
+            else if (conf >= 60) badge = '<span class="px-2.5 py-0.5 rounded-full bg-yellow-100 text-yellow-700 text-xs font-bold border border-yellow-200">TB</span>';
+            else badge = '<span class="px-2.5 py-0.5 rounded-full bg-red-100 text-red-700 text-xs font-bold border border-red-200">Thấp</span>';
+            
+            tr.innerHTML = `
+                <td class="px-6 py-4 text-center text-slate-400 text-xs">${idx + 1}</td>
+                <td class="px-6 py-4 font-mono text-slate-600 text-xs font-bold">${item.ma_sv}</td>
+                <td class="px-6 py-4 font-medium text-slate-800">${item.ho_ten}</td>
+                <td class="px-6 py-4"><span class="px-2 py-1 bg-slate-100 rounded text-xs text-slate-600 font-medium">${item.lop || '?'}</span></td>
+                <td class="px-6 py-4 text-indigo-600 font-medium text-sm">${item.thoi_gian_vao}</td>
+                <td class="px-6 py-4 font-mono text-xs">${conf.toFixed(1)}%</td>
+                <td class="px-6 py-4">${badge}</td>
+                <td class="px-6 py-4 text-center">
+                    <button onclick="deleteAttendance(${item.id_diem_danh})" class="group relative text-slate-400 hover:text-red-500 transition-colors p-2" title="Xóa bản ghi">
+                        <i class="fas fa-trash-alt"></i>
+                    </button>
+                </td>
+            `;
+            tbody.appendChild(tr);
+        });
     }
+    
+    window.deleteAttendance = async function(id) {
+        if(!confirm('Bạn có chắc chắn muốn xóa bản ghi điểm danh này?')) return;
+        
+        try {
+            const res = await fetch(`/api/diem-danh/${id}`, { method: 'DELETE' });
+            const data = await res.json();
+            
+            if(data.success) {
+                allHistory = allHistory.filter(x => x.id_diem_danh !== id);
+                filterAndRender();
+            } else {
+                alert('Lỗi: ' + (data.error || 'Không thể xóa'));
+            }
+        } catch(err) {
+            console.error(err);
+            alert('Lỗi kết nối khi xóa');
+        }
+    }
+
+    window.exportToExcel = function() { alert('Tính năng đang phát triển'); }
 </script>
 {% endblock %}

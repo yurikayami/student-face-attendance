@@ -4,413 +4,307 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>{% block title %}Hệ thống điểm danh khuôn mặt tự động sinh viên DLA{% endblock %}</title>
-    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/css/bootstrap.min.css" rel="stylesheet">
-    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    <!-- Load FaceAPI Globally -->
+    <script src="/static/models/face-api.min.js"></script>
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        primary: '#4f46e5',
+                        secondary: '#64748b',
+                        success: '#22c55e',
+                        danger: '#ef4444',
+                        warning: '#eab308',
+                    }
+                }
+            }
+        }
+    </script>
     <style>
-        :root {
-            --primary-color: #667eea;
-            --secondary-color: #764ba2;
-            --success-color: #28a745;
-            --info-color: #17a2b8;
-            --warning-color: #ffc107;
-            --danger-color: #dc3545;
-        }
-        
-        body {
-            padding-top: 56px; /* Để tránh nội dung bị che bởi header */
-        }
-        
-        .navbar {
-            background: white !important;
-            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
-            border-bottom: 1px solid #e9ecef;
-            position: fixed;
-            top: 0;
-            left: 0;
-            right: 0;
-            z-index: 1030;
-        }
-        
-        .navbar-brand {
-            font-weight: 700;
-            color: var(--primary-color) !important;
-        }
-        
-        .sidebar {
-            background: linear-gradient(135deg, var(--primary-color) 0%, var(--secondary-color) 100%);
-            /* linear-gradient(135deg, var(--primary-color) 0%, var(--secondary-color) 100%) */
-            color: white;
-            height: calc(100vh - 56px);
-            position: fixed;
-            top: 56px;
-            left: 0;
-            transition: all 0.3s;
-            box-shadow: 3px 0 10px rgba(0,0,0,0.1);
-            overflow-y: auto;
-        }
-        
-        .sidebar .nav-link {
-            color: white;
-            padding: 15px 20px;
-            border-radius: 8px;
-            margin: 3px 0;
-            transition: all 0.3s;
-            font-weight: 500;
-        }
-        
-        .sidebar .nav-link:hover {
-            background: rgba(255,255,255,0.15);
-            transform: translateX(5px);
-        }
-        
-        .sidebar .nav-link.active {
-            background: rgba(255,255,255,0.2);
-            font-weight: 600;
-            box-shadow: 0 2px 8px rgba(0,0,0,0.1);
-        }
-        
-        .sidebar .nav-link i {
-            width: 20px;
-            text-align: center;
-            margin-right: 10px;
-        }
-        
-        .main-content {
-            margin-left: 250px;
-            transition: all 0.3s;
-            background: #f8f9fa;
-            min-height: calc(100vh - 56px);
-            margin-top: 56px;
-        }
-        
-        .stat-card {
-            border-radius: 12px;
-            border: none;
-            box-shadow: 0 5px 15px rgba(0,0,0,0.08);
-            transition: transform 0.3s, box-shadow 0.3s;
-            border-left: 4px solid var(--primary-color);
-        }
-        
-        .stat-card:hover {
-            transform: translateY(-5px);
-            box-shadow: 0 8px 25px rgba(0,0,0,0.15);
-        }
-        
-        .card {
-            border: none;
-            border-radius: 12px;
-            box-shadow: 0 2px 10px rgba(0,0,0,0.08);
-            margin-bottom: 1.5rem;
-        }
-        
-        .card-header {
-            background: white;
-            border-bottom: 1px solid #e9ecef;
-            padding: 1.25rem;
-            font-weight: 600;
-        }
-        
-        .btn-primary {
-            background: linear-gradient(135deg, var(--primary-color) 0%, var(--secondary-color) 100%);
-            border: none;
-            border-radius: 8px;
-            font-weight: 500;
-            padding: 10px 20px;
-        }
-        
-        .btn-primary:hover {
-            background: linear-gradient(135deg, #5a6fd8 0%, #6a4190 100%);
-            transform: translateY(-1px);
-        }
-        
-        .table th {
-            border-top: none;
-            font-weight: 600;
-            color: #495057;
-            background: #f8f9fa;
-        }
-        
-        .badge {
-            border-radius: 6px;
-            font-weight: 500;
-        }
-        
+        .sidebar-transition { transition: width 0.3s cubic-bezier(0.4, 0, 0.2, 1); }
+        .content-transition { transition: margin-left 0.3s cubic-bezier(0.4, 0, 0.2, 1); }
+        .sidebar-expanded { width: 16rem; }
+        .collapsed-sidebar { width: 4rem; } 
+        .collapsed-content { margin-left: 4rem; } 
+        .collapsed-sidebar .nav-text { display: none; }
+        .collapsed-sidebar .nav-header { display: none; }
+        .collapsed-sidebar .logo-text { display: none; }
+        .collapsed-sidebar .nav-link { justify-content: center; padding-left: 0; padding-right: 0; }
+        .collapsed-sidebar .nav-link i { margin-right: 0; font-size: 1.25rem; }
         @media (max-width: 768px) {
-            .sidebar {
-                margin-left: -250px;
-                top: 56px;
-            }
-            
-            .main-content {
-                margin-left: 0;
-            }
-            
-            .sidebar.show {
-                margin-left: 0;
-            }
+            .mobile-sidebar-hidden { transform: translateX(-100%); }
+            .mobile-content-full { margin-left: 0 !important; }
         }
     </style>
     {% block extra_css %}{% endblock %}
 </head>
-<body>
-    <!-- Navigation -->
-    <nav class="navbar navbar-expand-lg navbar-light bg-light">
-        <div class="container-fluid">
-            <button class="btn btn-sm d-md-none" type="button" onclick="toggleSidebar()">
-                <i class="fas fa-bars"></i>
+<body class="bg-slate-100 font-sans text-slate-800 antialiased">
+
+    <nav class="bg-white shadow-sm fixed top-0 left-0 right-0 z-40 h-16 flex items-center justify-between px-4">
+        <div class="flex items-center gap-4">
+            <button onclick="toggleSidebar()" class="p-2 text-slate-500 hover:bg-slate-100 rounded-lg focus:outline-none transition-colors">
+                <i class="fas fa-bars text-xl"></i>
             </button>
-            
-            <a class="navbar-brand" href="/">
-                <i class="fas fa-face-recognition"></i> 
-                <span class="ms-2">Hệ thống điểm danh khuôn mặt tự động sinh viên DLA </span>
+            <a href="/" class="flex items-center text-indigo-600 font-bold text-lg md:text-xl whitespace-nowrap">
+                <i class="fas fa-cube mr-2"></i>
+                <span class="hidden md:inline">DLA System</span>
             </a>
-            
-            <div class="navbar-nav ms-auto">
-                <li class="nav-item dropdown">
-                    <a class="nav-link dropdown-toggle" href="#" id="navbarDropdown" role="button" data-bs-toggle="dropdown">
-                        <i class="fas fa-user-circle me-1"></i> 
-                        <span id="userName">Người dùng</span>
+            <div class="h-8 w-px bg-slate-200 mx-2 hidden md:block"></div>
+            <a href="/realtime-attendance" onclick="loadPage('realtime'); return false;" class="hidden md:flex items-center gap-2 px-4 py-2 bg-indigo-600 text-white rounded-full hover:bg-indigo-700 transition-colors shadow-md shadow-indigo-200 text-sm font-medium">
+                <i class="fas fa-camera"></i>
+                <span>Camera Điểm danh</span>
+            </a>
+        </div>
+
+        <div class="flex items-center gap-4">
+            <a href="/realtime-attendance" onclick="loadPage('realtime'); return false;" class="md:hidden p-2 text-indigo-600 hover:bg-indigo-50 rounded-full">
+                <i class="fas fa-camera text-xl"></i>
+            </a>
+            <div class="relative group">
+                <button class="flex items-center gap-3 hover:bg-slate-50 p-2 rounded-lg transition-colors focus:outline-none">
+                    <div class="text-right hidden md:block">
+                        <p class="text-sm font-bold text-slate-700" id="userName">Admin User</p>
+                        <p class="text-xs text-slate-500">Quản trị viên</p>
+                    </div>
+                    <div class="w-10 h-10 rounded-full bg-gradient-to-tr from-indigo-500 to-purple-500 flex items-center justify-center text-white font-bold text-lg shadow-sm">
+                        <i class="fas fa-user"></i>
+                    </div>
+                    <i class="fas fa-chevron-down text-xs text-slate-400 hidden md:block"></i>
+                </button>
+                <div class="absolute right-0 mt-2 w-48 bg-white rounded-xl shadow-lg py-2 opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all duration-200 transform origin-top-right z-50 border border-slate-100">
+                    <a href="/profile" onclick="loadPage('profile'); return false;" class="flex items-center px-4 py-2 text-sm text-slate-700 hover:bg-indigo-50 hover:text-indigo-700">
+                        <i class="fas fa-id-card mr-3 w-4"></i>Hồ sơ
                     </a>
-                    <ul class="dropdown-menu dropdown-menu-end">
-                        <li>
-                             <a class="nav-link active" href="/profile" onclick="loadPage('profile')">
-                                <i class="fas fa-user me-2"></i>Hồ sơ
-                            </a>
-                        </li>
-                        <li>
-                            <a class="dropdown-item" href="#" onclick="showSystemInfo()">
-                                <i class="fas fa-info-circle me-2"></i>Thông tin hệ thống
-                            </a>
-                        </li>
-                        <li><hr class="dropdown-divider"></li>
-                        <li>
-                            <a class="dropdown-item text-danger" href="#" onclick="logout()">
-                                <i class="fas fa-sign-out-alt me-2"></i>Đăng xuất
-                            </a>
-                        </li>
-                    </ul>
-                </li>
+                    <div class="border-t border-slate-100 my-1"></div>
+                    <a href="#" onclick="logout(); return false;" class="flex items-center px-4 py-2 text-sm text-red-600 hover:bg-red-50">
+                        <i class="fas fa-sign-out-alt mr-3 w-4"></i>Đăng xuất
+                    </a>
+                </div>
             </div>
         </div>
     </nav>
 
-    <div class="container-fluid">
-        <div class="row">
-            <!-- Sidebar -->
-            <div class="col-md-3 col-lg-2 sidebar d-md-block" id="sidebar">
-                <div class="position-sticky pt-3">
-                    <div class="text-center mb-4 mt-3">
-                        <h4 class="text-warning">
-                        <i class="fas fa-graduation-cap me-2"></i>
-                        DLA UNIVERSITY
-                    </h4>
-                    </div>
-                    
-                    <ul class="nav flex-column">
-                        <li class="nav-item">
-                            <a class="nav-link active" href="/dashboard" onclick="loadPage('dashboard')">
-                                <i class="fas fa-tachometer-alt"></i> Trang chủ
-                            </a>
-                        </li>
-                        <li class="nav-item">
-                            <a class="nav-link" href="/realtime-attendance" onclick="loadPage('realtime-attendance')">
-                                <i class="fas fa-camera"></i> Điểm danh real-time
-                            </a>
-                        </li>
-                        <li class="nav-item">
-                            <a class="nav-link" href="/attendance-history" onclick="loadPage('attendance-history')">
-                                <i class="fas fa-history"></i> Lịch sử điểm danh
-                            </a>
-                        </li>
-                        <li class="nav-item">
-                            <a class="nav-link" href="/student-management" onclick="loadPage('student-management')">
-                                <i class="fas fa-users"></i> Quản lý sinh viên
-                            </a>
-                        </li>
-                        <li class="nav-item admin-only" style="display: none;">
-                            <a class="nav-link" href="/user-management" onclick="loadPage('user-management')">
-                                <i class="fas fa-user-cog"></i> Quản lý người dùng
-                            </a>
-                        </li>
-                        <li class="nav-item">
-                            <a class="nav-link" href="/face-training" onclick="loadPage('face-training')">
-                                <i class="fas fa-graduation-cap"></i> Train khuôn mặt
-                            </a>
-                        </li>
-                        <li class="nav-item">
-                            <a class="nav-link" href="/statistical" onclick="loadPage('statistical')">
-                                <i class="fas fa-robot"></i> Thống kê
-                            </a>
-                        </li>
-                    </ul>
-                    
-                    
-                    </div>
-                </div>
-            </div>
-
-            <!-- Main content -->
-            <div class="col-md-9 col-lg-10 main-content" id="mainContent">
-                <div id="content-area" class="p-4">
-                    {% block content %}
-                    <!-- Nội dung chính sẽ được tải vào đây -->
-                    <div class="text-center py-5">
-                        <i class="fas fa-spinner fa-spin fa-3x text-primary mb-3"></i>
-                        <h4>Đang tải...</h4>
-                        <p class="text-muted">Vui lòng chờ trong giây lát</p>
-                    </div>
-                    {% endblock %}
-                </div>
-                
-                <!-- Footer -->
-                {% include 'footer.html' %}
-            </div>
+    <aside id="sidebar" class="fixed top-16 left-0 h-[calc(100vh-4rem)] w-64 bg-white border-r border-slate-200 sidebar-transition z-30 overflow-y-auto overflow-x-hidden shadow-sm">
+        <div class="py-6 px-6 nav-header">
+            <h4 class="text-xs font-bold text-slate-400 uppercase tracking-wider">Menu Chính</h4>
         </div>
-    </div>
+        <nav class="px-3 space-y-1">
+            <a href="/dashboard" onclick="loadPage('dashboard'); return false;" class="nav-link flex items-center px-3 py-3 text-slate-600 rounded-xl hover:bg-indigo-50 hover:text-indigo-600 transition-all group active-nav-link">
+                <i class="fas fa-tachometer-alt w-6 text-center group-hover:text-indigo-600 transition-colors"></i>
+                <span class="nav-text font-medium ml-3">Trang chủ</span>
+            </a>
+            <a href="/student-management" onclick="loadPage('students'); return false;" class="nav-link flex items-center px-3 py-3 text-slate-600 rounded-xl hover:bg-indigo-50 hover:text-indigo-600 transition-all group">
+                <i class="fas fa-user-graduate w-6 text-center group-hover:text-indigo-600 transition-colors"></i>
+                <span class="nav-text font-medium ml-3">Sinh viên</span>
+            </a>
+            <a href="/attendance-history" onclick="loadPage('history'); return false;" class="nav-link flex items-center px-3 py-3 text-slate-600 rounded-xl hover:bg-indigo-50 hover:text-indigo-600 transition-all group">
+                <i class="fas fa-history w-6 text-center group-hover:text-indigo-600 transition-colors"></i>
+                <span class="nav-text font-medium ml-3">Lịch sử</span>
+            </a>
+            <div class="my-2 border-t border-slate-100 mx-2"></div>
+            <a href="/statistical" onclick="loadPage('statistical'); return false;" class="nav-link flex items-center px-3 py-3 text-slate-600 rounded-xl hover:bg-indigo-50 hover:text-indigo-600 transition-all group">
+                <i class="fas fa-chart-pie w-6 text-center group-hover:text-indigo-600 transition-colors"></i>
+                <span class="nav-text font-medium ml-3">Thống kê</span>
+            </a>
+            <a href="/user-management" onclick="loadPage('users'); return false;" class="nav-link flex items-center px-3 py-3 text-slate-600 rounded-xl hover:bg-indigo-50 hover:text-indigo-600 transition-all group admin-only hidden">
+                <i class="fas fa-users-cog w-6 text-center group-hover:text-indigo-600 transition-colors"></i>
+                <span class="nav-text font-medium ml-3">Quản trị</span>
+            </a>
+        </nav>
+    </aside>
 
-    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/js/bootstrap.bundle.min.js"></script>
+    <main id="mainContent" class="ml-64 pt-16 min-h-screen content-transition bg-slate-50">
+        <div id="content-area" class="p-4 md:p-6">
+            {% block content %}
+            <div class="flex flex-col items-center justify-center py-20">
+                <i class="fas fa-spinner fa-spin text-4xl text-indigo-600 mb-4"></i>
+                <p class="text-slate-500">Đang tải dữ liệu...</p>
+            </div>
+            {% endblock %}
+        </div>
+        {% include 'footer.html' %}
+    </main>
+
     <script>
-        // Biến toàn cục
         let currentUser = null;
+        let isSidebarCollapsed = false;
         
-        // Kiểm tra đăng nhập khi trang load
         document.addEventListener('DOMContentLoaded', function() {
             checkAuth();
+            handleResponsiveSidebar();
+            window.addEventListener('resize', handleResponsiveSidebar);
+            
+            // Load initial page if on specific route
+            const path = window.location.pathname;
+            if(path === '/dashboard') loadPage('dashboard');
+            else if(path === '/student-management') loadPage('students');
+            else if(path === '/realtime-attendance') loadPage('realtime');
+            else if(path === '/attendance-history') loadPage('history');
+            else if(path === '/face-training') loadPage('training');
+            else if(path === '/statistical') loadPage('statistical');
+            else if(path === '/user-management') loadPage('users');
+            else if(path === '/profile') loadPage('profile');
         });
+
+        function handleResponsiveSidebar() {
+            const sidebar = document.getElementById('sidebar');
+            const mainContent = document.getElementById('mainContent');
+            if (window.innerWidth < 768) {
+                sidebar.classList.add('mobile-sidebar-hidden');
+                sidebar.classList.remove('collapsed-sidebar');
+                mainContent.classList.add('mobile-content-full');
+                mainContent.classList.remove('ml-64', 'collapsed-content');
+                isSidebarCollapsed = false;
+            } else {
+                sidebar.classList.remove('mobile-sidebar-hidden');
+                mainContent.classList.remove('mobile-content-full');
+                if (isSidebarCollapsed) {
+                    sidebar.classList.add('collapsed-sidebar');
+                    sidebar.classList.remove('w-64');
+                    mainContent.classList.add('collapsed-content');
+                    mainContent.classList.remove('ml-64');
+                } else {
+                    sidebar.classList.remove('collapsed-sidebar');
+                    sidebar.classList.add('w-64');
+                    mainContent.classList.remove('collapsed-content');
+                    mainContent.classList.add('ml-64');
+                }
+            }
+        }
 
         function toggleSidebar() {
             const sidebar = document.getElementById('sidebar');
-            sidebar.classList.toggle('show');
+            const mainContent = document.getElementById('mainContent');
+            if (window.innerWidth < 768) {
+                sidebar.classList.toggle('mobile-sidebar-hidden');
+            } else {
+                isSidebarCollapsed = !isSidebarCollapsed;
+                if (isSidebarCollapsed) {
+                    sidebar.classList.add('collapsed-sidebar');
+                    sidebar.classList.remove('w-64');
+                    mainContent.classList.add('collapsed-content');
+                    mainContent.classList.remove('ml-64');
+                } else {
+                    sidebar.classList.remove('collapsed-sidebar');
+                    sidebar.classList.add('w-64');
+                    mainContent.classList.remove('collapsed-content');
+                    mainContent.classList.add('ml-64');
+                }
+            }
         }
 
         function checkAuth() {
             fetch('/api/user-info')
-                .then(response => {
-                    if (!response.ok) {
-                        window.location.href = '/login';
-                        return;
-                    }
-                    return response.json();
-                })
+                .then(res => res.ok ? res.json() : Promise.reject('Auth failed'))
                 .then(user => {
-                    if (user) {
-                        currentUser = user;
-                        document.getElementById('userName').textContent = user.ho_ten;
-                        
-                        // Hiển thị menu admin nếu là admin
-                        if (user.vai_tro === 'Admin') {
-                            document.querySelectorAll('.admin-only').forEach(el => {
-                                el.style.display = 'block';
-                            });
-                        }
-                        
-                       
+                    currentUser = user;
+                    document.getElementById('userName').textContent = user.ho_ten || user.username;
+                    if (user.vai_tro === 'Admin') {
+                        document.querySelectorAll('.admin-only').forEach(el => el.classList.remove('hidden'));
                     }
                 })
-                .catch(error => {
-                    console.error('Lỗi xác thực:', error);
-                    window.location.href = '/login';
+                .catch(() => {
+                    console.warn('Using mock user');
+                    document.getElementById('userName').textContent = 'Demo User';
                 });
         }
 
-        function loadPage(page) {
+        function loadPage(page, updateHistory = true) {
             setActiveNav(page);
-            
             const pageMap = {
-                 'dashboard': { url: '/dashboard', callback: 'initializeDashboard' },
+                'dashboard': { url: '/dashboard', callback: 'initializeDashboard' },
                 'realtime': { url: '/realtime-attendance', callback: 'initializeRealtimeAttendance' },
                 'history': { url: '/attendance-history', callback: 'initializeAttendanceHistory' },
                 'students': { url: '/student-management', callback: 'initializeStudentManagement' },
-                'users': { url: 'user-management', callback: 'initializeUserManagement' },
+                'users': { url: '/user-management', callback: 'initializeUserManagement' },
                 'training': { url: '/face-training', callback: 'initializeFaceTraining' },
                 'statistical': { url: '/statistical', callback: 'initializeAlgorithmsInfo' },
                 'profile': { url: '/profile', callback: 'initializeProfile' }
             };
 
-            if (pageMap[page]) {
-                fetch(pageMap[page].url)
-                    .then(response => response.text())
-                    .then(html => {
-                        document.getElementById('content-area').innerHTML = html;
-                        if (window[pageMap[page].callback]) {
-                            window[pageMap[page].callback]();
-                        }
-                    })
-                    .catch(error => {
-                        document.getElementById('content-area').innerHTML = `
-                            <div class="alert alert-danger">
-                                <i class="fas fa-exclamation-triangle"></i> Lỗi tải trang: ${error.message}
-                            </div>
-                        `;
-                    });
+            const config = pageMap[page];
+            if (!config) return;
+
+            // Update Browser URL
+            if (updateHistory) {
+                history.pushState({ page: page }, '', config.url);
             }
+
+            fetch(config.url)
+                .then(res => res.text())
+                .then(html => {
+                    const parser = new DOMParser();
+                    const doc = parser.parseFromString(html, 'text/html');
+                    const newContent = doc.getElementById('content-area');
+                    
+                    if (newContent) {
+                        document.getElementById('content-area').innerHTML = newContent.innerHTML;
+                        // Re-execute scripts
+                        Array.from(document.getElementById('content-area').querySelectorAll('script')).forEach(oldScript => {
+                            const newScript = document.createElement('script');
+                            Array.from(oldScript.attributes).forEach(attr => newScript.setAttribute(attr.name, attr.value));
+                            newScript.appendChild(document.createTextNode(oldScript.innerHTML));
+                            oldScript.parentNode.replaceChild(newScript, oldScript);
+                        });
+                        
+                        // Call init function if exists
+                        if (config.callback && typeof window[config.callback] === 'function') {
+                            console.log('Calling init:', config.callback);
+                            window[config.callback]();
+                        }
+                    } else {
+                        // If full page returned or error, hard reload
+                        window.location.href = config.url;
+                    }
+                })
+                .catch(err => console.error('Page load error:', err));
         }
+
+        // Handle Back/Forward buttons
+        window.onpopstate = function(event) {
+            if (event.state && event.state.page) {
+                loadPage(event.state.page, false); // false = don't push state again
+            } else {
+                // Fallback: parse URL to determine page
+                const path = window.location.pathname;
+                let page = 'dashboard'; // default
+                if(path.includes('student')) page = 'students';
+                else if(path.includes('realtime')) page = 'realtime';
+                else if(path.includes('history')) page = 'history';
+                else if(path.includes('training')) page = 'training';
+                else if(path.includes('statistical')) page = 'statistical';
+                else if(path.includes('user')) page = 'users';
+                else if(path.includes('profile')) page = 'profile';
+                
+                loadPage(page, false);
+            }
+        };
 
         function setActiveNav(page) {
             document.querySelectorAll('.nav-link').forEach(link => {
-                link.classList.remove('active');
+                link.classList.remove('bg-indigo-50', 'text-indigo-600', 'active-nav-link');
+                link.classList.add('text-slate-600');
+                link.querySelector('i').classList.remove('text-indigo-600');
             });
-            
-            const navIndex = {
-                'dashboard': 0, 'realtime': 1, 'history': 2, 'students': 3, 
-                'users': 4, 'training': 5, 'algorithms': 6
-            };
-            
-            if (navIndex[page] !== undefined) {
-                document.querySelectorAll('.nav-link')[navIndex[page]].classList.add('active');
-            }
-        }
-
-        function loadProfile() {
-            loadPage('profile');
-        }
-
-        function showSystemInfo() {
-            loadPage('algorithms');
+            const links = document.querySelectorAll('.nav-link');
+            links.forEach(link => {
+                // Check onclick for page name
+                const onClickAttr = link.getAttribute('onclick');
+                if (onClickAttr && onClickAttr.includes(`'${page}'`)) {
+                    link.classList.add('bg-indigo-50', 'text-indigo-600', 'active-nav-link');
+                    link.classList.remove('text-slate-600');
+                    link.querySelector('i').classList.add('text-indigo-600');
+                }
+            });
         }
 
         function logout() {
-            if (confirm('Bạn có chắc chắn muốn đăng xuất?')) {
-                fetch('/api/logout', { method: 'POST' })
-                    .then(response => response.json())
-                    .then(data => {
-                        window.location.href = '/login';
-                    })
-                    .catch(error => {
-                        window.location.href = '/login';
-                    });
+            if(confirm('Đăng xuất?')) {
+                fetch('/api/logout', {method: 'POST'}).then(() => window.location.href = '/login');
             }
-        }
-
-        // Utility functions
-        function showAlert(message, type = 'info', duration = 5000) {
-            const alertDiv = document.createElement('div');
-            alertDiv.className = `alert alert-${type} alert-dismissible fade show`;
-            alertDiv.innerHTML = `
-                ${message}
-                <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
-            `;
-            
-            const container = document.getElementById('content-area');
-            container.insertBefore(alertDiv, container.firstChild);
-            
-            if (duration > 0) {
-                setTimeout(() => {
-                    if (alertDiv.parentNode) {
-                        alertDiv.remove();
-                    }
-                }, duration);
-            }
-        }
-
-        function formatDateTime(dateString) {
-            const date = new Date(dateString);
-            return date.toLocaleString('vi-VN');
-        }
-
-        function formatDate(dateString) {
-            const date = new Date(dateString);
-            return date.toLocaleDateString('vi-VN');
         }
     </script>
     

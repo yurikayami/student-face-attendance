@@ -1,35 +1,14 @@
-<footer class="footer mt-5 py-3 bg-light border-top">
-    <div class="container-fluid">
-        <div class="row align-items-center">
-            <div class="col-md-6">
-                <span class="text-muted">
-                    &copy; 2025 Hệ thống điểm danh khuôn mặt. 
-                    <span id="currentYear"></span>
-                </span>
+<footer class="mt-12 border-t border-slate-200 pt-6 pb-8">
+    <div class="container mx-auto px-4">
+        <div class="flex flex-col md:flex-row justify-between items-center text-slate-500 text-sm">
+            <div class="mb-4 md:mb-0">
+                <p>&copy; <script>document.write(new Date().getFullYear())</script> <strong>DLA University</strong>. All rights reserved.</p>
             </div>
-            <div class="col-md-6 text-md-end">
-                <span class="text-muted">
-                    <i class="fas fa-code-branch"></i> 
-                    Phiên bản 1.0.0 | 
-                    <i class="fas fa-heart text-danger"></i> 
-                    Được phát triển bởi Huỳnh Lê Anh Khoa
-                    <i class="fas fa-coffee"></i>
-                </span>
-            </div>
-        </div>
-        <div class="row mt-2">
-            <div class="col-12 text-center">
-                <small class="text-muted">
-                    <i class="fas fa-shield-alt text-success"></i>
-                    Hệ thống sử dụng đa thuật toán nâng cao
-                  
-                </small>
+            <div class="flex space-x-6">
+                <a href="#" class="hover:text-indigo-600 transition-colors">Về chúng tôi</a>
+                <a href="#" class="hover:text-indigo-600 transition-colors">Chính sách bảo mật</a>
+                <a href="#" class="hover:text-indigo-600 transition-colors">Liên hệ</a>
             </div>
         </div>
     </div>
 </footer>
-
-<script>
-    // Cập nhật năm hiện tại
-    document.getElementById('currentYear').textContent = new Date().getFullYear();
-</script>

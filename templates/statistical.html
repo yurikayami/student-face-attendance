@@ -1,613 +1,168 @@
 {% extends "header.html" %}
 
-{% block title %}Hệ thống điểm danh khuôn mặt sinh viên DLA{% endblock %}
+{% block title %}Thống kê - Hệ thống DLA{% endblock %}
 
 {% block content %}
-<style>
-    /* CSS Wrapper để sửa lỗi lệch khung */
-    .main-wrapper {
-        width: 100%;
-        padding: 20px;
-        flex: 1;
-    }
+<div class="container mx-auto px-4 py-6">
+    <h1 class="text-2xl font-bold text-slate-800 mb-6"><i class="fas fa-chart-pie mr-2 text-indigo-600"></i>Báo cáo Thống kê</h1>
 
-    /* CSS cũ của bạn giữ nguyên */
-    .card {
-        border-radius: 10px;
-        box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
-        margin-bottom: 20px;
-        border: none;
-        background-color: #fff;
-    }
-    .card-header {
-        background-color: #4e73df;
-        color: white;
-        border-radius: 10px 10px 0 0 !important;
-        font-weight: bold;
-    }
-    .stat-card {
-        text-align: center;
-        padding: 20px;
-    }
-    .stat-number {
-        font-size: 2.5rem;
-        font-weight: bold;
-        margin: 10px 0;
-    }
-    .present { color: #1cc88a; }
-    .absent { color: #e74a3b; }
-    .total { color: #4e73df; }
-    
-    .table-responsive {
-        border-radius: 10px;
-        overflow: hidden;
-    }
-    .table th {
-        background-color: #4e73df;
-        color: white;
-        vertical-align: middle;
-    }
-    .badge-present {
-        background-color: #1cc88a;
-        color: white;
-        padding: 5px 10px;
-        border-radius: 15px;
-    }
-    .badge-absent {
-        background-color: #e74a3b;
-        color: white;
-        padding: 5px 10px;
-        border-radius: 15px;
-    }
-    .filter-section {
-        background-color: white;
-        padding: 15px;
-        border-radius: 10px;
-        margin-bottom: 20px;
-        box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
-    }
-    .chart-container {
-        position: relative;
-        height: 300px;
-        width: 100%;
-    }
-    .export-options {
-        display: flex;
-        gap: 10px;
-        align-items: center;
-    }
-    
-    /* Các nút bấm */
-    .export-btn { background-color: #1cc88a; border: none; color: white; padding: 8px 15px; border-radius: 5px; font-weight: bold; transition: all 0.3s; }
-    .export-btn:hover { background-color: #17a673; transform: translateY(-2px); }
-    
-    .refresh-btn { background-color: #4e73df; border: none; color: white; padding: 8px 15px; border-radius: 5px; font-weight: bold; transition: all 0.3s; }
-    .refresh-btn:hover { background-color: #2e59d9; transform: translateY(-2px); }
-    
-    .print-btn { background-color: #6c757d; border: none; color: white; padding: 8px 15px; border-radius: 5px; font-weight: bold; transition: all 0.3s; }
-    .print-btn:hover { background-color: #5a6268; transform: translateY(-2px); }
-
-    .loading { text-align: center; padding: 20px; }
-    .attendance-time { font-family: 'Courier New', monospace; font-weight: bold; }
-    
-    @media print {
-        .no-print { display: none !important; }
-        .card { box-shadow: none !important; border: 1px solid #ddd !important; }
-        .table th { background-color: #f8f9fa !important; color: black !important; }
-    }
-</style>
-
-<div class="main-wrapper">
-    <div class="row">
-        <div class="col-12">
-            <div class="d-flex justify-content-between align-items-center mb-4">
-                <h2 class="text-primary"><i class="fas fa-chart-bar me-2"></i> Thống kê điểm danh</h2>
-                <div class="export-options">
-                    <button class="btn refresh-btn me-2 no-print" id="refresh-btn">
-                        <i class="fas fa-sync-alt me-1"></i> Làm mới
-                    </button>
-                    <div class="dropdown no-print">
-                        <button class="btn export-btn dropdown-toggle" type="button" id="exportDropdown" data-bs-toggle="dropdown">
-                            <i class="fas fa-file-excel me-1"></i> Xuất Excel
-                        </button>
-                        <ul class="dropdown-menu">
-                            <li><a class="dropdown-item" href="#" id="export-present-btn">Danh sách đã điểm danh</a></li>
-                            <li><a class="dropdown-item" href="#" id="export-absent-btn">Danh sách chưa điểm danh</a></li>
-                            <li><a class="dropdown-item" href="#" id="export-all-btn">Toàn bộ danh sách</a></li>
-                        </ul>
-                    </div>
-                    <button class="btn print-btn no-print" id="print-btn">
-                        <i class="fas fa-print me-1"></i> In báo cáo
-                    </button>
-                </div>
-            </div>
+    <div class="grid grid-cols-1 md:grid-cols-4 gap-6 mb-8">
+        <div class="bg-white p-5 rounded-xl shadow-sm border border-slate-100">
+            <p class="text-slate-500 text-xs font-bold uppercase">Tổng sinh viên</p>
+            <h3 class="text-3xl font-bold text-slate-800 mt-2" id="statTotal">0</h3>
+        </div>
+        <div class="bg-white p-5 rounded-xl shadow-sm border border-slate-100">
+            <p class="text-slate-500 text-xs font-bold uppercase">Đã điểm danh (Tháng)</p>
+            <h3 class="text-3xl font-bold text-green-600 mt-2" id="statPresent">0</h3>
+        </div>
+        <div class="bg-white p-5 rounded-xl shadow-sm border border-slate-100">
+            <p class="text-slate-500 text-xs font-bold uppercase">Vắng (Tháng)</p>
+            <h3 class="text-3xl font-bold text-red-500 mt-2" id="statAbsent">0</h3>
+        </div>
+        <div class="bg-white p-5 rounded-xl shadow-sm border border-slate-100">
+            <p class="text-slate-500 text-xs font-bold uppercase">Tỷ lệ đi học</p>
+            <h3 class="text-3xl font-bold text-indigo-600 mt-2" id="statRate">0%</h3>
         </div>
     </div>
 
-    <div class="filter-section no-print">
-        <div class="row">
-            <div class="col-md-4">
-                <label for="date-filter" class="form-label">Ngày điểm danh</label>
-                <input type="date" class="form-control" id="date-filter" value="">
-                <div class="timezone-info text-muted mt-1 small">Múi giờ: <span id="timezone-display"></span></div>
-            </div>
-            <div class="col-md-4">
-                <label for="class-filter" class="form-label">Lớp</label>
-                <select class="form-select" id="class-filter">
-                    <option value="">Tất cả lớp</option>
-                </select>
-            </div>
-            <div class="col-md-4">
-                <label for="status-filter" class="form-label">Trạng thái</label>
-                <select class="form-select" id="status-filter">
-                    <option value="">Tất cả</option>
-                    <option value="present">Đã điểm danh</option>
-                    <option value="absent">Chưa điểm danh</option>
-                </select>
-            </div>
+    <div class="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-8">
+        <div class="bg-white p-5 rounded-xl shadow-sm border border-slate-100">
+            <h3 class="font-bold text-slate-700 mb-4">Xu hướng điểm danh (7 ngày qua)</h3>
+            <div class="h-64"><canvas id="trendChart"></canvas></div>
         </div>
-        <div class="row mt-3">
-            <div class="col-12">
-                <button class="btn btn-primary" id="apply-filter-btn">
-                    <i class="fas fa-filter me-1"></i> Áp dụng bộ lọc
-                </button>
-                <button class="btn btn-outline-secondary" id="reset-filter-btn">
-                    <i class="fas fa-redo me-1"></i> Đặt lại
-                </button>
-            </div>
+        <div class="bg-white p-5 rounded-xl shadow-sm border border-slate-100">
+            <h3 class="font-bold text-slate-700 mb-4">Tỷ lệ theo lớp</h3>
+            <div class="h-64"><canvas id="classPieChart"></canvas></div>
         </div>
     </div>
 
-    <div class="row">
-        <div class="col-md-4">
-            <div class="card stat-card">
-                <div class="card-body">
-                    <i class="fas fa-users fa-2x text-primary"></i>
-                    <div class="stat-number total" id="total-students">0</div>
-                    <div class="text-muted">Tổng số sinh viên</div>
-                </div>
+    <div class="bg-white rounded-xl shadow-sm border border-slate-100 overflow-hidden">
+        <div class="p-5 border-b border-slate-100 flex flex-col md:flex-row justify-between items-center gap-4">
+            <h3 class="font-bold text-slate-700">Chi tiết theo sinh viên</h3>
+            <div class="flex gap-2">
+                <select id="monthFilter" class="px-3 py-2 border border-slate-200 rounded-lg text-sm focus:ring-2 focus:ring-indigo-500 outline-none"></select>
+                <button class="px-4 py-2 bg-green-600 text-white text-sm rounded-lg hover:bg-green-700" onclick="window.exportReport()"><i class="fas fa-file-excel mr-2"></i>Xuất Excel</button>
             </div>
         </div>
-        <div class="col-md-4">
-            <div class="card stat-card">
-                <div class="card-body">
-                    <i class="fas fa-user-check fa-2x present"></i>
-                    <div class="stat-number present" id="present-count">0</div>
-                    <div class="text-muted">Đã điểm danh</div>
-                </div>
-            </div>
-        </div>
-        <div class="col-md-4">
-            <div class="card stat-card">
-                <div class="card-body">
-                    <i class="fas fa-user-times fa-2x absent"></i>
-                    <div class="stat-number absent" id="absent-count">0</div>
-                    <div class="text-muted">Chưa điểm danh</div>
-                </div>
-            </div>
-        </div>
-    </div>
-
-    <div class="row mt-4 no-print">
-        <div class="col-md-6">
-            <div class="card h-100">
-                <div class="card-header">
-                    <i class="fas fa-chart-pie me-1"></i> Tỷ lệ điểm danh
-                </div>
-                <div class="card-body">
-                    <div class="chart-container">
-                        <canvas id="attendanceChart"></canvas>
-                    </div>
-                </div>
-            </div>
-        </div>
-        <div class="col-md-6">
-            <div class="card h-100">
-                <div class="card-header">
-                    <i class="fas fa-chart-bar me-1"></i> Điểm danh theo lớp
-                </div>
-                <div class="card-body">
-                    <div class="chart-container">
-                        <canvas id="classChart"></canvas>
-                    </div>
-                </div>
-            </div>
-        </div>
-    </div>
-
-    <div class="row mt-4 mb-5">
-        <div class="col-12">
-            <div class="card">
-                <div class="card-header d-flex justify-content-between align-items-center">
-                    <span><i class="fas fa-table me-1"></i> Danh sách điểm danh - <span id="selected-date-display"></span></span>
-                    <span class="badge bg-primary" id="table-count">0 sinh viên</span>
-                </div>
-                <div class="card-body">
-                    <div class="table-responsive">
-                        <table class="table table-striped table-hover" id="attendance-table">
-                            <thead>
-                                <tr>
-                                    <th width="50">STT</th>
-                                    <th>Mã SV</th>
-                                    <th>Họ tên</th>
-                                    <th>Lớp</th>
-                                    <th>Trạng thái</th>
-                                    <th>Thời gian điểm danh đầu tiên</th>
-                                </tr>
-                            </thead>
-                            <tbody id="attendance-table-body">
-                            </tbody>
-                        </table>
-                    </div>
-                    <div class="loading" id="table-loading">
-                        <div class="spinner-border text-primary" role="status">
-                            <span class="visually-hidden">Loading...</span>
-                        </div>
-                        <p class="mt-2">Đang tải dữ liệu...</p>
-                    </div>
-                    <div id="no-data" class="text-center py-4" style="display: none;">
-                        <i class="fas fa-inbox fa-3x text-muted mb-3"></i>
-                        <p class="text-muted">Không có dữ liệu điểm danh</p>
-                    </div>
-                </div>
-            </div>
+        <div class="overflow-x-auto">
+            <table class="w-full text-left border-collapse">
+                <thead class="bg-slate-50 text-slate-500 text-xs uppercase font-bold">
+                    <tr>
+                        <th class="px-6 py-4">Sinh viên</th>
+                        <th class="px-6 py-4">Lớp</th>
+                        <th class="px-6 py-4 text-center">Số buổi có mặt</th>
+                        <th class="px-6 py-4 text-center">Số buổi vắng</th>
+                        <th class="px-6 py-4 text-center">Tỷ lệ</th>
+                    </tr>
+                </thead>
+                <tbody id="reportTableBody" class="divide-y divide-slate-100 text-sm text-slate-600"></tbody>
+            </table>
         </div>
     </div>
 </div>
 
 <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
-
 <script>
-    // Global variables
-    let allStudents = [];
-    let attendanceData = [];
-    let filteredData = [];
-    let attendanceChart = null;
-    let classChart = null;
-    const TODAY_ISO_DATE = new Date().toISOString().split('T')[0];
+    var trendChartInstance = null;
+    var classChartInstance = null;
 
-    // DOM elements
-    const currentUserElement = document.getElementById('current-user');
-    const refreshBtn = document.getElementById('refresh-btn');
-    const exportPresentBtn = document.getElementById('export-present-btn');
-    const exportAbsentBtn = document.getElementById('export-absent-btn');
-    const exportAllBtn = document.getElementById('export-all-btn');
-    const printBtn = document.getElementById('print-btn');
-    const dateFilter = document.getElementById('date-filter');
-    const classFilter = document.getElementById('class-filter');
-    const statusFilter = document.getElementById('status-filter');
-    const applyFilterBtn = document.getElementById('apply-filter-btn');
-    const resetFilterBtn = document.getElementById('reset-filter-btn');
-    const totalStudentsElement = document.getElementById('total-students');
-    const presentCountElement = document.getElementById('present-count');
-    const absentCountElement = document.getElementById('absent-count');
-    const tableCountElement = document.getElementById('table-count');
-    const selectedDateDisplay = document.getElementById('selected-date-display');
-    const attendanceTableBody = document.getElementById('attendance-table-body');
-    const tableLoading = document.getElementById('table-loading');
-    const noDataElement = document.getElementById('no-data');
-    const timezoneDisplay = document.getElementById('timezone-display');
-
-    // API endpoints
-    const API_BASE = '/api';
-    const ENDPOINTS = {
-        STUDENTS: `${API_BASE}/sinh-vien`,
-        ATTENDANCE: `${API_BASE}/diem-danh`
-    };
-
-    // --- Các hàm tiện ích (Timezone, Format) ---
-    function getTimezone() { return Intl.DateTimeFormat().resolvedOptions().timeZone; }
-
-    function formatToLocalISOString(date) {
-        const year = date.getFullYear();
-        const month = String(date.getMonth() + 1).padStart(2, '0');
-        const day = String(date.getDate()).padStart(2, '0');
-        return `${year}-${month}-${day}`;
+    window.initializeAlgorithmsInfo = function() {
+        initMonthFilter();
+        loadStats();
     }
 
-    function parseServerDate(dateString) {
-        if (!dateString) return null;
-        if (dateString.includes('Z') || dateString.includes('+')) return new Date(dateString);
-        return new Date(dateString + 'Z');
-    }
-
-    function formatTimeForDisplay(datetimeString) {
-        if (!datetimeString) return '-';
-        if (datetimeString.match(/^\d{2}:\d{2}:\d{2}$/)) {
-            return `<span class="attendance-time">${datetimeString}</span>`;
-        }
-        const date = parseServerDate(datetimeString);
-        if (!date || isNaN(date.getTime())) return '-';
-        return `<span class="attendance-time">${date.toLocaleTimeString('vi-VN', {
-            hour: '2-digit', minute: '2-digit', second: '2-digit',
-            timeZone: getTimezone()
-        })}</span>`;
-    }
-
-    function apiCall(url, options = {}) {
-        return fetch(url, options).then(res => {
-            if (!res.ok) throw new Error(`HTTP error! status: ${res.status}`);
-            return res.json();
+    if (document.readyState === 'complete' || document.readyState === 'interactive') {
+        if(document.getElementById('statTotal')) window.initializeAlgorithmsInfo();
+    } else {
+        document.addEventListener('DOMContentLoaded', () => {
+            if(document.getElementById('statTotal')) window.initializeAlgorithmsInfo();
         });
     }
 
-    // --- Session Storage Logic ---
-    function loadRealTimeAttendanceFromSession() {
-        const storedAttendance = sessionStorage.getItem('realTimeAttendance');
-        const storedDate = sessionStorage.getItem('realTimeAttendanceDate');
-        if (storedAttendance && storedDate === TODAY_ISO_DATE) {
-            try {
-                const parsed = JSON.parse(storedAttendance);
-                return parsed.map(item => ({
-                    ma_sv: item.ma_sv,
-                    ho_ten: item.ho_ten,
-                    lop: item.lop,
-                    thoi_gian_vao: item.time,
-                    do_tin_cay: parseFloat(item.confidence)
-                }));
-            } catch (e) { return []; }
-        }
-        return [];
-    }
-
-    // --- Main Logic ---
-    document.addEventListener('DOMContentLoaded', function() {
-        timezoneDisplay.textContent = getTimezone();
+    function initMonthFilter() {
+        const sel = document.getElementById('monthFilter');
         const today = new Date();
-        dateFilter.value = formatToLocalISOString(today);
-        updateDateDisplay(dateFilter.value);
-        loadData();
-        setupEventListeners();
-    });
-
-    function setupEventListeners() {
-        refreshBtn.addEventListener('click', loadData);
-        exportPresentBtn.addEventListener('click', () => exportToExcel('present'));
-        exportAbsentBtn.addEventListener('click', () => exportToExcel('absent'));
-        exportAllBtn.addEventListener('click', () => exportToExcel('all'));
-        printBtn.addEventListener('click', () => window.print()); // Sửa lại logic in đơn giản
-        applyFilterBtn.addEventListener('click', applyFilters);
-        resetFilterBtn.addEventListener('click', resetFilters);
-        dateFilter.addEventListener('change', function() {
-            updateDateDisplay(this.value);
-            loadData();
-        });
+        sel.innerHTML = '';
+        for (let i = 0; i < 6; i++) {
+            const d = new Date(today.getFullYear(), today.getMonth() - i, 1);
+            const val = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}`;
+            const text = `Tháng ${d.getMonth() + 1}/${d.getFullYear()}`;
+            sel.add(new Option(text, val));
+        }
+        sel.addEventListener('change', loadStats);
     }
 
-    function updateDateDisplay(dateString) {
-        const date = new Date(dateString + 'T00:00:00');
-        selectedDateDisplay.textContent = date.toLocaleDateString('vi-VN', {
-            weekday: 'long', year: 'numeric', month: 'long', day: 'numeric'
-        });
-    }
-
-    function showLoading() {
-        tableLoading.style.display = 'block';
-        noDataElement.style.display = 'none';
-        attendanceTableBody.innerHTML = '';
-    }
-
-    function hideLoading() {
-        tableLoading.style.display = 'none';
-    }
-
-    async function loadData() {
-        showLoading();
-        const selectedDate = dateFilter.value;
-        const isToday = selectedDate === TODAY_ISO_DATE;
-        
+    async function loadStats() {
         try {
-            // Tải danh sách sinh viên
-            const students = await apiCall(ENDPOINTS.STUDENTS);
-            allStudents = students || [];
+            const studentsRes = await fetch('/api/sinh-vien');
+            const students = await studentsRes.json();
+            const historyRes = await fetch('/api/diem-danh');
+            const history = await historyRes.json();
+            processData(students, history);
+        } catch (e) { console.error(e); }
+    }
 
-            // Tải dữ liệu điểm danh
-            if (isToday) {
-                const sessionAttendance = loadRealTimeAttendanceFromSession();
-                if (sessionAttendance.length > 0) {
-                    attendanceData = sessionAttendance;
-                } else {
-                    const att = await apiCall(`${ENDPOINTS.ATTENDANCE}?date=${selectedDate}`);
-                    attendanceData = att || [];
-                }
-            } else {
-                const att = await apiCall(`${ENDPOINTS.ATTENDANCE}?date=${selectedDate}`);
-                attendanceData = att || [];
-            }
-            
-            populateClassFilter();
-            processData();
-            hideLoading();
-        } catch (error) {
-            console.error('Error loading data:', error);
-            hideLoading();
-            noDataElement.innerHTML = `<p class="text-danger">Lỗi tải dữ liệu: ${error.message}</p>`;
-            noDataElement.style.display = 'block';
+    function processData(students, history) {
+        document.getElementById('statTotal').textContent = students.length;
+        const monthVal = document.getElementById('monthFilter').value;
+        const currentMonthHistory = history.filter(h => h.thoi_gian_vao.startsWith(monthVal));
+        const uniquePresent = new Set(currentMonthHistory.map(h => h.ma_sv)).size;
+        document.getElementById('statPresent').textContent = uniquePresent;
+        document.getElementById('statAbsent').textContent = Math.max(0, students.length - uniquePresent);
+        const rate = students.length > 0 ? Math.round((uniquePresent / students.length) * 100) : 0;
+        document.getElementById('statRate').textContent = `${rate}%`;
+        renderTrendChart(history);
+        renderClassChart(students, currentMonthHistory);
+        renderTable(students, currentMonthHistory);
+    }
+
+    function renderTrendChart(history) {
+        const ctx = document.getElementById('trendChart').getContext('2d');
+        const labels = [];
+        const data = [];
+        for (let i = 6; i >= 0; i--) {
+            const d = new Date();
+            d.setDate(d.getDate() - i);
+            const dateStr = d.toISOString().split('T')[0];
+            labels.push(d.toLocaleDateString('vi-VN', {day: '2-digit', month: '2-digit'}));
+            const count = history.filter(h => h.thoi_gian_vao.startsWith(dateStr)).length;
+            data.push(count);
         }
-    }
-
-    function populateClassFilter() {
-        const classes = [...new Set(allStudents.map(s => s.lop))].sort();
-        classFilter.innerHTML = '<option value="">Tất cả lớp</option>';
-        classes.forEach(c => {
-            const opt = document.createElement('option');
-            opt.value = c;
-            opt.textContent = c;
-            classFilter.appendChild(opt);
+        if (window.trendChartInstance) window.trendChartInstance.destroy();
+        window.trendChartInstance = new Chart(ctx, {
+            type: 'line',
+            data: { labels: labels, datasets: [{ label: 'Số lượt điểm danh', data: data, borderColor: '#4f46e5', backgroundColor: 'rgba(79, 70, 229, 0.1)', fill: true, tension: 0.4 }] },
+            options: { responsive: true, maintainAspectRatio: false }
         });
     }
 
-    function processData() {
-        const firstAttendanceRecords = getFirstAttendanceRecords(attendanceData);
-        const presentStudentIds = new Set(firstAttendanceRecords.map(r => r.ma_sv));
-        
-        filteredData = allStudents.map(student => {
-            const record = firstAttendanceRecords.find(r => r.ma_sv === student.ma_sv);
-            return {
-                ...student,
-                isPresent: presentStudentIds.has(student.ma_sv),
-                attendanceRecord: record || null
-            };
+    function renderClassChart(students, monthHistory) {
+        const ctx = document.getElementById('classPieChart').getContext('2d');
+        const classes = [...new Set(students.map(s => s.lop))];
+        const data = classes.map(c => monthHistory.filter(h => h.lop === c).length);
+        if (window.classChartInstance) window.classChartInstance.destroy();
+        window.classChartInstance = new Chart(ctx, {
+            type: 'doughnut',
+            data: { labels: classes, datasets: [{ data: data, backgroundColor: ['#4f46e5', '#10b981', '#f59e0b', '#ef4444', '#8b5cf6'] }] },
+            options: { responsive: true, maintainAspectRatio: false }
         });
-        
-        applyFilters();
     }
 
-    function getFirstAttendanceRecords(data) {
-        const records = {};
-        data.forEach(r => {
-            const ma = r.ma_sv;
-            // Logic so sánh thời gian đơn giản hóa cho ví dụ này
-            // Trong thực tế nên convert date chuẩn xác hơn
-            if (!records[ma]) records[ma] = r;
-        });
-        return Object.values(records);
-    }
-
-    function applyFilters() {
-        const cls = classFilter.value;
-        const stt = statusFilter.value;
-        
-        let result = [...filteredData];
-        if (cls) result = result.filter(s => s.lop === cls);
-        if (stt === 'present') result = result.filter(s => s.isPresent);
-        else if (stt === 'absent') result = result.filter(s => !s.isPresent);
-        
-        updateStatistics(result);
-        updateTable(result);
-        updateCharts(result);
-    }
-
-    function resetFilters() {
-        dateFilter.value = TODAY_ISO_DATE;
-        updateDateDisplay(dateFilter.value);
-        classFilter.value = '';
-        statusFilter.value = '';
-        loadData();
-    }
-
-    function updateStatistics(data) {
-        const total = data.length;
-        const present = data.filter(s => s.isPresent).length;
-        totalStudentsElement.textContent = total;
-        presentCountElement.textContent = present;
-        absentCountElement.textContent = total - present;
-        tableCountElement.textContent = `${total} sinh viên`;
-    }
-
-    function updateTable(data) {
-        attendanceTableBody.innerHTML = '';
-        if (data.length === 0) {
-            noDataElement.style.display = 'block';
-            return;
-        }
-        noDataElement.style.display = 'none';
-        
-        data.forEach((student, index) => {
+    function renderTable(students, monthHistory) {
+        const tbody = document.getElementById('reportTableBody');
+        tbody.innerHTML = '';
+        students.forEach(s => {
+            const presentCount = monthHistory.filter(h => h.ma_sv === s.ma_sv).length;
             const tr = document.createElement('tr');
-            const statusBadge = student.isPresent ? 
-                '<span class="badge-present">Đã điểm danh</span>' : 
-                '<span class="badge-absent">Chưa điểm danh</span>';
-            const time = student.attendanceRecord ? 
-                formatTimeForDisplay(student.attendanceRecord.thoi_gian_vao) : '-';
-            
-            tr.innerHTML = `
-                <td class="text-center">${index + 1}</td>
-                <td><strong>${student.ma_sv}</strong></td>
-                <td>${student.ho_ten}</td>
-                <td>${student.lop}</td>
-                <td>${statusBadge}</td>
-                <td>${time}</td>
-            `;
-            attendanceTableBody.appendChild(tr);
+            tr.innerHTML = `<td class="px-6 py-4 font-medium text-slate-800">${s.ho_ten}<br><span class="text-xs text-slate-400">${s.ma_sv}</span></td><td class="px-6 py-4">${s.lop}</td><td class="px-6 py-4 text-center text-green-600 font-bold">${presentCount}</td><td class="px-6 py-4 text-center text-slate-400">-</td><td class="px-6 py-4 text-center">-</td>`;
+            tbody.appendChild(tr);
         });
     }
-
-    // --- Chart Logic ---
-    function updateCharts(data) {
-        const present = data.filter(s => s.isPresent).length;
-        const absent = data.length - present;
-
-        // 1. Pie Chart
-        const ctxPie = document.getElementById('attendanceChart');
-        if (ctxPie) {
-            if (attendanceChart) attendanceChart.destroy();
-            attendanceChart = new Chart(ctxPie.getContext('2d'), {
-                type: 'pie',
-                data: {
-                    labels: ['Đã điểm danh', 'Chưa điểm danh'],
-                    datasets: [{
-                        data: [present, absent],
-                        backgroundColor: ['#1cc88a', '#e74a3b']
-                    }]
-                },
-                options: { responsive: true, maintainAspectRatio: false }
-            });
-        }
-
-        // 2. Class Chart (Bar)
-        // Nhóm dữ liệu theo lớp
-        const classData = {};
-        data.forEach(s => {
-            if(!classData[s.lop]) classData[s.lop] = { total: 0, present: 0 };
-            classData[s.lop].total++;
-            if(s.isPresent) classData[s.lop].present++;
-        });
-
-        const classes = Object.keys(classData);
-        const presentData = classes.map(c => classData[c].present);
-        const absentData = classes.map(c => classData[c].total - classData[c].present);
-
-        const ctxBar = document.getElementById('classChart');
-        if (ctxBar) {
-            if (classChart) classChart.destroy();
-            classChart = new Chart(ctxBar.getContext('2d'), {
-                type: 'bar',
-                data: {
-                    labels: classes,
-                    datasets: [
-                        { label: 'Có mặt', data: presentData, backgroundColor: '#1cc88a' },
-                        { label: 'Vắng', data: absentData, backgroundColor: '#e74a3b' }
-                    ]
-                },
-                options: {
-                    responsive: true,
-                    maintainAspectRatio: false,
-                    scales: {
-                        x: { stacked: true },
-                        y: { stacked: true, beginAtZero: true }
-                    }
-                }
-            });
-        }
+    
+    window.exportReport = function() {
+        const wb = XLSX.utils.table_to_book(document.querySelector('table'), {sheet: "BaoCao"});
+        XLSX.writeFile(wb, 'BaoCao_ThongKe.xlsx');
     }
-
-    // --- Excel Export (Giữ nguyên logic đơn giản) ---
-    function exportToExcel(type) {
-        let dataToExport = [...filteredData];
-        if (type === 'present') dataToExport = dataToExport.filter(s => s.isPresent);
-        if (type === 'absent') dataToExport = dataToExport.filter(s => !s.isPresent);
-        
-        if (dataToExport.length === 0) {
-            alert("Không có dữ liệu để xuất!");
-            return;
-        }
-
-        const wsData = dataToExport.map((s, i) => ({
-            'STT': i + 1,
-            'Mã SV': s.ma_sv,
-            'Họ tên': s.ho_ten,
-            'Lớp': s.lop,
-            'Trạng thái': s.isPresent ? 'Có mặt' : 'Vắng',
-            'Thời gian': s.attendanceRecord ? s.attendanceRecord.thoi_gian_vao : ''
-        }));
-
-        const ws = XLSX.utils.json_to_sheet(wsData);
-        const wb = XLSX.utils.book_new();
-        XLSX.utils.book_append_sheet(wb, ws, "DiemDanh");
-        XLSX.writeFile(wb, `BaoCao_DiemDanh_${dateFilter.value}.xlsx`);
-    }
-
 </script>
 {% endblock %}

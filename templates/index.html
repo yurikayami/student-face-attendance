@@ -1,21 +1,24 @@
+{% extends "header.html" %}
 
- {% extends "header.html" %}
+{% block title %}Trang chủ - Hệ thống DLA{% endblock %}
 
-{% block title %}Hệ thống điểm danh khuôn mặt sinh viên DLA{% endblock %}
-
-
-    <nav>
-        <!-- Navigation menu -->
-        <a href="/">Trang chủ</a>
-        <a href="/realtime">Điểm danh real-time</a>
-        <a href="/history">Lịch sử điểm danh</a>
-        <!-- ... -->
-    </nav>
+{% block content %}
+<div class="flex flex-col items-center justify-center h-[calc(100vh-8rem)] text-center">
+    <div class="bg-indigo-50 p-6 rounded-full mb-6 animate-bounce">
+        <i class="fas fa-graduation-cap text-6xl text-indigo-600"></i>
+    </div>
+    <h1 class="text-4xl font-bold text-slate-800 mb-4">Chào mừng đến với Hệ thống Điểm danh DLA</h1>
+    <p class="text-slate-500 text-lg max-w-2xl mb-8">
+        Hệ thống quản lý sinh viên và điểm danh tự động sử dụng công nghệ nhận diện khuôn mặt AI.
+    </p>
     
-    
-   
-    
-    {% block extra_js %}
-    {% endblock %}
-</body>
-</html>
+    <div class="flex gap-4">
+        <a href="/dashboard" onclick="loadPage('dashboard'); return false;" class="px-8 py-3 bg-indigo-600 text-white rounded-xl font-bold shadow-lg hover:bg-indigo-700 transition-transform transform hover:-translate-y-1">
+            <i class="fas fa-tachometer-alt mr-2"></i>Dashboard
+        </a>
+        <a href="/realtime-attendance" onclick="loadPage('realtime'); return false;" class="px-8 py-3 bg-white border border-slate-200 text-slate-700 rounded-xl font-bold shadow-sm hover:bg-slate-50 transition-transform transform hover:-translate-y-1">
+            <i class="fas fa-camera mr-2"></i>Điểm danh ngay
+        </a>
+    </div>
+</div>
+{% endblock %}
